@@ -85,11 +85,11 @@ export class Car {
   }
 
   updateCamera(camera: THREE.PerspectiveCamera) {
-    const behind = new THREE.Vector3(0, 3, -8).applyAxisAngle(
+    const behind = new THREE.Vector3(0, 2.2, -7).applyAxisAngle(
       new THREE.Vector3(0, 1, 0), this.rotation
     );
     const targetPos = this.position.clone().add(behind);
-    camera.position.lerp(targetPos, 0.1);
-    camera.lookAt(this.position.x, this.position.y + 1, this.position.z);
+    camera.position.lerp(targetPos, 0.15);
+    camera.lookAt(this.position.x, this.position.y + 0.5, this.position.z);
   }
 }

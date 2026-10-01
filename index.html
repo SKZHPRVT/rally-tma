@@ -17,8 +17,6 @@
       background: #87ceeb;
       font-family: 'Courier New', monospace;
       touch-action: none;
-      position: fixed;
-      inset: 0;
     }
     canvas { display: block; width: 100%; height: 100%; }
     
@@ -32,9 +30,11 @@
       z-index: 10;
     }
     
+    /* TIMER — отступ сверху + safe area */
     #timer {
       position: absolute;
-      top: 4px; left: 8px;
+      top: calc(env(safe-area-inset-top, 0px) + 60px);
+      left: 12px;
       font-size: 24px;
       font-weight: bold;
       background: rgba(0,0,0,0.6);
@@ -43,9 +43,11 @@
       border: 2px solid rgba(255,255,255,0.2);
     }
     
+    /* SPEED — отступ снизу + safe area */
     #speed {
       position: absolute;
-      bottom: 8px; right: 8px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 110px);
+      right: 20px;
       font-size: 36px;
       font-weight: bold;
       background: rgba(0,0,0,0.6);
@@ -87,31 +89,31 @@
     }
     
     #btn-gas {
-      bottom: 110px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 110px);
       right: 20px;
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
     }
     
     #btn-brake {
-      bottom: 30px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
       right: 20px;
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
     }
     
     #btn-left {
-      bottom: 30px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 60px);
       left: 20px;
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
     }
     
     #btn-right {
-      bottom: 30px;
-      left: 110px;
-      width: 70px;
-      height: 70px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 60px);
+      left: 120px;
+      width: 80px;
+      height: 80px;
     }
   </style>
 </head>
