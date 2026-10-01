@@ -2,59 +2,132 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="full-screen" content="yes">
   <title>Rally TMA</title>
   <script src="https://telegram.org/js/telegram-web-app.js" async></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #87ceeb; }
-    #game { width: 100vw; height: 100vh; display: block; }
-    #hud {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none;
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: #87ceeb;
       font-family: 'Courier New', monospace;
+      touch-action: none;
+      position: fixed;
+      inset: 0;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    
+    /* HUD */
+    #hud {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
       color: #fff;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      z-index: 10;
     }
+    
     #timer {
-      position: absolute; top: 20px; left: 20px;
-      font-size: 32px; font-weight: bold;
-      background: rgba(0,0,0,0.5);
-      padding: 8px 16px; border-radius: 8px;
+      position: absolute;
+      top: 4px; left: 8px;
+      font-size: 24px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.2);
     }
+    
     #speed {
-      position: absolute; bottom: 20px; right: 20px;
-      font-size: 48px; font-weight: bold;
-      background: rgba(0,0,0,0.5);
-      padding: 8px 16px; border-radius: 8px;
+      position: absolute;
+      bottom: 8px; right: 8px;
+      font-size: 36px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.2);
+      min-width: 130px;
+      text-align: center;
     }
-    #speed span { font-size: 20px; opacity: 0.7; }
+    
+    #speed span {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    /* Управление */
     .btn-control {
-      position: fixed; pointer-events: auto;
+      position: fixed;
+      pointer-events: auto;
       background: rgba(0,0,0,0.4);
       border: 2px solid rgba(255,255,255,0.5);
-      border-radius: 50%; color: #fff;
-      font-size: 24px; font-weight: bold;
-      display: flex; align-items: center; justify-content: center;
-      user-select: none; cursor: pointer;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 22px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      cursor: pointer;
+      touch-action: none;
+      transition: transform 0.1s, background 0.15s;
+      z-index: 20;
     }
-    .btn-control:active { background: rgba(255,255,255,0.3); }
-    #btn-gas { bottom: 100px; right: 30px; width: 80px; height: 80px; }
-    #btn-brake { bottom: 20px; right: 30px; width: 80px; height: 80px; }
-    #btn-left { bottom: 60px; left: 30px; width: 80px; height: 80px; }
-    #btn-right { bottom: 60px; left: 130px; width: 80px; height: 80px; }
+    
+    .btn-control:active {
+      background: rgba(255,255,255,0.4);
+      transform: scale(0.92);
+    }
+    
+    #btn-gas {
+      bottom: 110px;
+      right: 20px;
+      width: 70px;
+      height: 70px;
+    }
+    
+    #btn-brake {
+      bottom: 30px;
+      right: 20px;
+      width: 70px;
+      height: 70px;
+    }
+    
+    #btn-left {
+      bottom: 30px;
+      left: 20px;
+      width: 70px;
+      height: 70px;
+    }
+    
+    #btn-right {
+      bottom: 30px;
+      left: 110px;
+      width: 70px;
+      height: 70px;
+    }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  
   <div id="hud">
     <div id="timer">00:00.00</div>
     <div id="speed">0 <span>km/h</span></div>
   </div>
+  
   <div id="btn-gas" class="btn-control">▲</div>
   <div id="btn-brake" class="btn-control">▼</div>
   <div id="btn-left" class="btn-control">◀</div>
   <div id="btn-right" class="btn-control">▶</div>
+  
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
