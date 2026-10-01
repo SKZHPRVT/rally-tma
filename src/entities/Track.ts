@@ -12,7 +12,7 @@ export class Track {
 
   loadTextures() {
     const loader = new THREE.TextureLoader();
-    const basePath = '/assets/cmr/track/';
+    const basePath = './assets/cmr/track/';
     const texNames = ['gravel1', 'gravel2', 'gravel3', 'mud1', 'rock1', 'tarmac1', 'grass1'];
 
     for (const name of texNames) {
