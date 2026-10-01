@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Test2</title></head>
+<body style="margin:0;background:#111;color:#fff;font-family:sans-serif;padding:20px">
+<h1 id="status">Loading...</h1>
+<div id="game"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script>
+  document.getElementById('status').textContent = 'Phaser loaded: ' + (typeof Phaser);
+
+  if (typeof Phaser === 'undefined') {
+    document.getElementById('status').textContent = 'Phaser NOT loaded! CDN failed.';
+  } else {
+    try {
+      new Phaser.Game({
+        type: Phaser.CANVAS,
+        parent: 'game',
+        width: 600, height: 400,
+        backgroundColor: '#2244aa',
+        scene: {
+          create() {
+            this.add.text(300, 200, 'GLOBAL PHASER OK', { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
+          }
+        }
+      });
+      document.getElementById('status').textContent = 'Game created! Phaser version: ' + Phaser.VERSION;
+    } catch (e) {
+      document.getElementById('status').textContent = 'ERROR: ' + e.message;
+    }
+  }
+</script>
+</body></html>
