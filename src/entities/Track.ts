@@ -1,21 +1,52 @@
 import * as THREE from 'three';
 
 export class Track {
-  constructor(scene: THREE.Scene) {
-    const groundGeo = new THREE.PlaneGeometry(1000, 1000, 1, 1);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x3a5f2a });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
+  private textures: { [key: string]: THREE.Texture } = {};
 
+  constructor(scene: THREE.Scene) {
+    this.loadTextures();
+
+    this.createGround(scene);
     this.createRoad(scene);
     this.scatterTrees(scene);
   }
 
-  createRoad(scene: THREE.Scene) {
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x8b7355 });
+  loadTextures() {
+    const loader = new THREE.TextureLoader();
 
+    // Загружаем текстуры CMR
+    const basePath = './assets/cmr/track/';
+    const texNames = ['gravel1', 'gravel2', 'gravel3', 'mud1', 'rock1', 'tarmac1', 'grass1'];
+    
+    for (const name of texNames) {
+      const tex = loader.load(`${basePath}${name}.png`);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.magFilter = THREE.LinearFilter;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      this.textures[name] = tex;
+    }
+
+    console.log('[track] textures loaded:', Object.keys(this.textures));
+  }
+
+  createGround(scene: THREE.Scene) {
+    const grassTex = this.textures['grass1'];
+    // Повторяем текстуру много раз на большой плоскости
+    grassTex.repeat.set(100, 100);
+
+    const groundGeo = new THREE.PlaneGeometry(1000, 1000, 1, 1);
+    const groundMat = new THREE.MeshStandardMaterial({
+      map: grassTex,
+      color: 0xffffff, // белый множитель, чтобы текстура не темнела
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+  }
+
+  createRoad(scene: THREE.Scene) {
     const points: THREE.Vector3[] = [];
     for (let i = 0; i < 50; i++) {
       const z = -i * 20;
@@ -23,9 +54,26 @@ export class Track {
       points.push(new THREE.Vector3(x, 0.05, z));
     }
 
+    // Список текстур для разных секций (чередуем)
+    const texCycle = ['gravel1', 'gravel2', 'gravel3', 'mud1', 'gravel1', 'tarmac1'];
+
     for (let i = 0; i < points.length - 1; i++) {
       const a = points[i];
       const b = points[i + 1];
+
+      // Берём текстуру по циклу
+      const texName = texCycle[i % texCycle.length];
+      const tex = this.textures[texName].clone();
+      tex.needsUpdate = true;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      // Повторяем 2 раза по ширине, 6 раз по длине
+      tex.repeat.set(2, 6);
+
+      const roadMat = new THREE.MeshStandardMaterial({
+        map: tex,
+        color: 0xffffff,
+      });
 
       const geo = new THREE.PlaneGeometry(8, 20, 1, 1);
       const road = new THREE.Mesh(geo, roadMat);
