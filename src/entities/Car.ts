@@ -16,7 +16,6 @@ export class Car {
   drag: number = 0.5;
   turnSpeed: number = 1.8;
 
-  // Сглаженные параметры камеры
   private smoothBackDist: number = 7;
   private smoothHeight: number = 2.2;
   private smoothFov: number = 70;
@@ -106,18 +105,17 @@ export class Car {
   updateCamera(camera: THREE.PerspectiveCamera, dt: number = 0.016) {
     const speedRatio = Math.min(Math.abs(this.velocity) / this.maxSpeed, 1);
 
-    // Целевые параметры камеры
+    // Параметры камеры
     const targetBackDist = 7 + speedRatio * 0.8;
     const targetHeight = 2.2 + speedRatio * 0.15;
     const targetFov = 70 + speedRatio * 2;
 
-    // Плавное сглаживание параметров (frame-rate independent)
     const paramSmooth = 1 - Math.exp(-8 * dt);
     this.smoothBackDist += (targetBackDist - this.smoothBackDist) * paramSmooth;
     this.smoothHeight += (targetHeight - this.smoothHeight) * paramSmooth;
     this.smoothFov += (targetFov - this.smoothFov) * paramSmooth;
 
-    // Целевая позиция камеры (позади машины)
+    // Целевая позиция
     const offset = new THREE.Vector3(0, this.smoothHeight, -this.smoothBackDist);
     offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation);
 
@@ -127,24 +125,31 @@ export class Car {
       this.position.z + offset.z
     );
 
-    // === ТОТ САМЫЙ LERP (0.15), но с поправкой на dt ===
-    // На 60 FPS: 1 - exp(-6*0.016) = 0.09 ≈ 0.1
-    // На 30 FPS: 1 - exp(-6*0.033) = 0.18
-    // Ощущение ТАКОЕ ЖЕ как было при 0.15, но БЕЗ ДЁРГАНЬЯ
-    const posSmooth = 1 - Math.exp(-5 * dt);
+    // === МЕДЛЕННЫЙ lerp — камера отстаёт как раньше ===
+    // 0.08 на 60 FPS — то самое ощущение
+    // НЕ frame-rate independent — на 30 FPS будет 0.08 * 2 = эффект почти тот же
+    const lerpSpeed = 0.12; // ← вот эта цифра даёт «дёрганое, но живое» ощущение
     
-    camera.position.x += (targetPos.x - camera.position.x) * posSmooth;
-    camera.position.y += (targetPos.y - camera.position.y) * posSmooth;
-    camera.position.z += (targetPos.z - camera.position.z) * posSmooth;
+    camera.position.x += (targetPos.x - camera.position.x) * lerpSpeed;
+    camera.position.y += (targetPos.y - camera.position.y) * lerpSpeed;
+    camera.position.z += (targetPos.z - camera.position.z) * lerpSpeed;
 
-    // Смотрим на машину
     camera.lookAt(
       this.position.x,
       this.position.y + 0.6,
       this.position.z
     );
 
-    // FOV (мягко)
+    // === SHAKY CAM — тряска от скорости ===
+    // Чем быстрее — тем сильнее трясёт
+    const shakeIntensity = speedRatio * speedRatio * 0.08; // квадратичная зависимость
+    if (shakeIntensity > 0.001) {
+      camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+      camera.position.y += (Math.random() - 0.5) * shakeIntensity;
+      camera.position.z += (Math.random() - 0.5) * shakeIntensity;
+    }
+
+    // FOV
     if (Math.abs(this.smoothFov - camera.fov) > 0.05) {
       camera.fov = this.smoothFov;
       camera.updateProjectionMatrix();
