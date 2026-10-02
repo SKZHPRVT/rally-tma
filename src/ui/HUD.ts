@@ -24,6 +24,13 @@ export class HUD {
   // Антидубль для арки
   private archTriggered: boolean = false;
   
+  // Для race — трекинг минимального расстояния от старта
+  // Если машина далеко уехала и вернулась — это финиш
+  private minDistanceFromStart: number = Infinity;
+  private raceElapsed: number = 0;
+  private lastCarPos: { x: number, z: number } = { x: 0, z: 0 };
+  private raceDistanceTravelled: number = 0;
+  
   onNewWorld: (() => void) | null = null;
 
   constructor() {
@@ -38,7 +45,6 @@ export class HUD {
     this.countdownEl = document.getElementById('countdown')!;
     this.countdownNumberEl = document.getElementById('countdown-number')!;
     
-    // Стартовое меню
     document.getElementById('btn-start-race')!.addEventListener('click', () => {
       this.startCountdown();
     });
@@ -46,7 +52,6 @@ export class HUD {
       this.startFreeRide();
     });
     
-    // Меню арки
     document.getElementById('btn-arch-race')!.addEventListener('click', () => {
       this.archModal.classList.remove('show');
       this.startCountdown();
@@ -57,10 +62,8 @@ export class HUD {
     });
     document.getElementById('btn-arch-close')!.addEventListener('click', () => {
       this.archModal.classList.remove('show');
-      // Продолжаем свободную езду
     });
     
-    // Финиш
     document.getElementById('btn-retry')!.addEventListener('click', () => {
       this.finishModal.classList.remove('show');
       this.startCountdown();
@@ -70,7 +73,6 @@ export class HUD {
       if (this.onNewWorld) this.onNewWorld();
     });
     
-    // Кнопка меню (сверху справа)
     this.menuBtn.addEventListener('click', () => {
       this.showStartMenu();
     });
@@ -80,6 +82,9 @@ export class HUD {
   startRace() {
     this.mode = 'race';
     this.elapsed = 0;
+    this.raceElapsed = 0;
+    this.raceDistanceTravelled = 0;
+    this.minDistanceFromStart = Infinity;
     this.timerEl.textContent = '00:00.00';
     this.menuBtn.classList.remove('show');
     this.archTriggered = false;
@@ -161,30 +166,56 @@ export class HUD {
       }
     }
     
-    // === ТАЙМЕР (в гонке) ===
+    if (!track) return;
+    
+    const startPoint = track.startPoint;
+    const dx = car.position.x - startPoint.x;
+    const dz = car.position.z - startPoint.z;
+    const distToStart = Math.sqrt(dx * dx + dz * dz);
+    
+    // === ГОНКА ===
     if (this.mode === 'race') {
       this.elapsed += dt;
+      this.raceElapsed += dt;
       
-      if (track && this.elapsed > 5) {
-        const startPoint = track.startPoint;
-        const dx = car.position.x - startPoint.x;
-        const dz = car.position.z - startPoint.z;
-        const distToStart = Math.sqrt(dx * dx + dz * dz);
-        
-        if (distToStart < 12) {
-          this.showFinish();
-        }
+      // Трекинг расстояния, которое машина проехала от старта
+      const lastDx = this.lastCarPos.x - startPoint.x;
+      const lastDz = this.lastCarPos.z - startPoint.z;
+      const lastDist = Math.sqrt(lastDx * lastDx + lastDz * lastDz);
+      
+      // Если расстояние до старта перешло через максимум (уехали и вернулись)
+      if (lastDist > this.minDistanceFromStart) {
+        this.minDistanceFromStart = lastDist;
+      }
+      
+      // Дополнительно: считаем реальную дистанцию через позиции
+      if (this.lastCarPos.x !== 0 || this.lastCarPos.z !== 0) {
+        const movedX = car.position.x - this.lastCarPos.x;
+        const movedZ = car.position.z - this.lastCarPos.z;
+        this.raceDistanceTravelled += Math.sqrt(movedX * movedX + movedZ * movedZ);
+      }
+      this.lastCarPos.x = car.position.x;
+      this.lastCarPos.z = car.position.z;
+      
+      // === ФИНИШ ===
+      // Условия:
+      // 1. Прошло хотя бы 10 секунд
+      // 2. Машина уехала минимум на 100 м от старта (иначе это "сдал назад-вперёд")
+      // 3. Машина проехала минимум 300 м общего пути
+      // 4. Сейчас близко к старту (< 12 м)
+      const reallyDroveAround = 
+        this.raceElapsed > 10 &&
+        this.minDistanceFromStart > 100 &&
+        this.raceDistanceTravelled > 300 &&
+        distToStart < 12;
+      
+      if (reallyDroveAround) {
+        this.showFinish();
       }
     }
     
     // === АРКА-ТРИГГЕР (в свободной езде) ===
-    if (this.mode === 'free' && track && !this.archTriggered) {
-      const startPoint = track.startPoint;
-      const dx = car.position.x - startPoint.x;
-      const dz = car.position.z - startPoint.z;
-      const distToStart = Math.sqrt(dx * dx + dz * dz);
-      
-      // Если заехал в арку — показать меню
+    if (this.mode === 'free' && !this.archTriggered) {
       if (distToStart < 10) {
         this.archTriggered = true;
         this.archModal.classList.add('show');
@@ -192,13 +223,8 @@ export class HUD {
       }
     }
     
-    // Сбрасываем триггер когда отъехал
-    if (this.mode === 'free' && track && this.archTriggered) {
-      const startPoint = track.startPoint;
-      const dx = car.position.x - startPoint.x;
-      const dz = car.position.z - startPoint.z;
-      const distToStart = Math.sqrt(dx * dx + dz * dz);
-      
+    // Сбрасываем триггер когда отъехал далеко
+    if (this.mode === 'free' && this.archTriggered) {
       if (distToStart > 30) {
         this.archTriggered = false;
       }
@@ -211,7 +237,6 @@ export class HUD {
   }
 
   canControl(): boolean {
-    // Блок управления когда открыта любая модалка
     if (this.startModal.classList.contains('show')) return false;
     if (this.archModal.classList.contains('show')) return false;
     if (this.finishModal.classList.contains('show')) return false;
