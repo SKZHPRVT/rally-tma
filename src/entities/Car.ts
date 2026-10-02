@@ -16,9 +16,10 @@ export class Car {
   drag: number = 0.5;
   turnSpeed: number = 1.8;
 
-  constructor(scene: THREE.Scene, spawnPos?: THREE.Vector3) {
+  constructor(scene: THREE.Scene, spawnPos?: THREE.Vector3, spawnRot: number = 0) {
     this.mesh = new THREE.Group();
     this.position = spawnPos ? spawnPos.clone() : new THREE.Vector3(0, 0.5, 0);
+    this.rotation = spawnRot;
 
     const bodyGeo = new THREE.BoxGeometry(1.8, 0.8, 3.5);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2266cc });
@@ -51,7 +52,17 @@ export class Car {
     }
 
     this.mesh.position.copy(this.position);
+    this.mesh.rotation.y = this.rotation;
     scene.add(this.mesh);
+  }
+
+  resetPosition(pos: THREE.Vector3, rot: number = 0) {
+    this.position.copy(pos);
+    this.rotation = rot;
+    this.velocity = 0;
+    this.angularVelocity = 0;
+    this.mesh.position.copy(this.position);
+    this.mesh.rotation.y = this.rotation;
   }
 
   update(dt: number, input: Input) {

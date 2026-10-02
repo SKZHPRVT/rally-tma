@@ -17,6 +17,8 @@ export class Game {
   engineSound: EngineSound;
   clock: THREE.Clock;
   running: boolean = false;
+  
+  private currentSeed: number = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -50,31 +52,60 @@ export class Game {
     sun.shadow.camera.far = 500;
     this.scene.add(sun);
 
-    this.track = new Track(this.scene);
-
-    // Спавн машины ПРЯМО У СТАРТОВОЙ АРКИ
-    const spawnPoint = this.track.startPoint.clone();
-    spawnPoint.y = 0.5;
-    // Смещаем чуть назад по направлению движения (чтобы арка была перед машиной)
-    const next = this.track.roadPoints[1];
-    const dir = next.clone().sub(this.track.startPoint).normalize();
-    spawnPoint.x -= dir.x * 5;  // 5м назад от арки
-    spawnPoint.z -= dir.z * 5;
+    this.currentSeed = this.weeklySeed();
     
-    this.car = new Car(this.scene, spawnPoint);
+    this.track = new Track(this.scene, this.currentSeed);
+    
+    const spawnPos = this.track.getSpawnPoint();
+    const spawnRot = this.track.getSpawnRotation();
+    this.car = new Car(this.scene, spawnPos, spawnRot);
 
     this.hud = new HUD();
     this.input = new Input();
     this.engineSound = new EngineSound();
 
-    // Обработка кнопки "Новая карта"
     this.hud.onNewWorld = () => {
-      console.log('[game] generating new world');
-      location.reload(); // пока просто перезагрузка
+      this.regenerate();
     };
 
     this.clock = new THREE.Clock();
     window.addEventListener('resize', () => this.onResize());
+  }
+
+  private weeklySeed(): number {
+    const now = new Date();
+    const year = now.getFullYear();
+    const start = new Date(year, 0, 1);
+    const days = Math.floor((now.getTime() - start.getTime()) / 86400000);
+    const week = Math.ceil((days + start.getDay() + 1) / 7);
+    return year * 100 + week;
+  }
+
+  private randomSeed(): number {
+    return Math.floor(Math.random() * 1000000) + 1;
+  }
+
+  regenerate(newSeed?: number) {
+    console.log('[game] regenerating world');
+    
+    this.currentSeed = newSeed ?? this.randomSeed();
+    
+    this.track.dispose();
+    this.track = new Track(this.scene, this.currentSeed);
+    
+    const spawnPos = this.track.getSpawnPoint();
+    const spawnRot = this.track.getSpawnRotation();
+    this.car.resetPosition(spawnPos, spawnRot);
+    
+    this.camera.position.set(
+      spawnPos.x - Math.sin(spawnRot) * 10,
+      spawnPos.y + 3,
+      spawnPos.z - Math.cos(spawnRot) * 10
+    );
+    
+    this.hud.showStartMenu();
+    
+    console.log('[game] new world ready, seed:', this.currentSeed);
   }
 
   onResize() {
@@ -94,11 +125,8 @@ export class Game {
     requestAnimationFrame(() => this.loop());
 
     const dt = Math.min(this.clock.getDelta(), 0.1);
-    
-    // Управление только в режимах race/free
+
     this.input.enabled = this.hud.canControl();
-    
-    // Сбрасываем нажатия когда управление выключено
     if (!this.input.enabled) {
       this.input.reset();
     }
