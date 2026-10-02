@@ -18,7 +18,7 @@
     }
     canvas { display: block; width: 100%; height: 100%; }
     
-    /* HUD — жёстко прибит к верху */
+    /* HUD — таймер и скорость */
     #timer {
       position: fixed;
       top: 8px;
@@ -92,6 +92,73 @@
     #btn-brake { bottom: 20px; right: 20px; width: 80px; height: 80px; }
     #btn-left { bottom: 60px; left: 20px; width: 80px; height: 80px; }
     #btn-right { bottom: 60px; left: 120px; width: 80px; height: 80px; }
+    
+    /* Модалка финиша */
+    #finish-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    
+    #finish-modal.show {
+      display: flex;
+    }
+    
+    #finish-title {
+      font-size: 48px;
+      color: #FFD24A;
+      font-weight: bold;
+      text-shadow: 0 0 20px rgba(255,210,74,0.8), 3px 3px 6px #000;
+      margin-bottom: 12px;
+      letter-spacing: 3px;
+    }
+    
+    #finish-time {
+      font-size: 32px;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px #000;
+      margin-bottom: 32px;
+      letter-spacing: 2px;
+    }
+    
+    #finish-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 320px;
+    }
+    
+    .finish-btn {
+      padding: 16px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      background: rgba(30,30,30,0.9);
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    
+    .finish-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .finish-btn.primary {
+      background: rgba(200,30,30,0.85);
+      border-color: #ff5555;
+    }
   </style>
 </head>
 <body>
@@ -104,6 +171,15 @@
   <div id="btn-brake" class="btn-control">▼</div>
   <div id="btn-left" class="btn-control">◀</div>
   <div id="btn-right" class="btn-control">▶</div>
+  
+  <div id="finish-modal">
+    <div id="finish-title">ФИНИШ</div>
+    <div id="finish-time">00:00.00</div>
+    <div id="finish-buttons">
+      <button class="finish-btn primary" id="btn-retry">🔄 Заново</button>
+      <button class="finish-btn" id="btn-new-world">🌍 Новый мир</button>
+    </div>
+  </div>
   
   <script type="module" src="/src/main.ts"></script>
 </body>

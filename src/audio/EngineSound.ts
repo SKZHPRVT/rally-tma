@@ -50,16 +50,16 @@ export class EngineSound {
     const speedRatio = Math.min(speed / maxSpeed, 1);
     const now = this.ctx.currentTime;
 
-    // 60 → 200 Гц
+    // 60 → 175 Гц (было 200)
     let targetFreq;
     if (speedRatio > 0.95) {
-      targetFreq = 200;
+      targetFreq = 175;
     } else {
-      targetFreq = 60 + speedRatio * 140; // 60-200
+      targetFreq = 60 + speedRatio * 115; // 60-175
     }
     this.osc.frequency.linearRampToValueAtTime(targetFreq, now + 0.1);
 
-    let targetFilter = 700 + speedRatio * 500; // 700-1200
+    const targetFilter = 700 + speedRatio * 500;
     this.filter.frequency.linearRampToValueAtTime(targetFilter, now + 0.1);
 
     let targetGain;

@@ -52,8 +52,8 @@ export class Game {
 
     this.track = new Track(this.scene);
 
-    // Спавн машины на дороге
-    const spawnPoint = this.track.roadPoints[0].clone();
+    // Спавн машины на 20 м ПОСЛЕ старта (чтобы сразу пересечь линию)
+    const spawnPoint = this.track.roadPoints[2].clone();
     spawnPoint.y = 0.5;
     this.car = new Car(this.scene, spawnPoint);
 
@@ -85,7 +85,7 @@ export class Game {
 
     this.car.update(dt, this.input);
     this.car.updateCamera(this.camera);
-    this.hud.update(dt, this.car);
+    this.hud.update(dt, this.car, this.track);
 
     this.engineSound.update(this.car.velocity, this.input.gas, this.input.brake, dt);
 
