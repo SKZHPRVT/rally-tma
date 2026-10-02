@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Car } from '../entities/Car';
-import { World } from '../world/World';
+import { Track } from '../entities/Track';
 import { HUD } from '../ui/HUD';
 import { Input } from './Input';
 import { EngineSound } from '../audio/EngineSound';
@@ -11,7 +11,7 @@ export class Game {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   car: Car;
-  world: World;
+  track: Track;
   hud: HUD;
   input: Input;
   engineSound: EngineSound;
@@ -29,38 +29,29 @@ export class Game {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87ceeb);
-    this.scene.fog = new THREE.Fog(0x87ceeb, 300, 800);
+    this.scene.fog = new THREE.Fog(0x87ceeb, 250, 700);
 
     this.camera = new THREE.PerspectiveCamera(
-      70, window.innerWidth / window.innerHeight, 0.1, 3000
+      70, window.innerWidth / window.innerHeight, 0.1, 2000
     );
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.65);
     this.scene.add(ambient);
 
     const sun = new THREE.DirectionalLight(0xffffff, 0.9);
-    sun.position.set(50, 150, 50);
+    sun.position.set(50, 100, 50);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
-    sun.shadow.camera.left = -200;
-    sun.shadow.camera.right = 200;
-    sun.shadow.camera.top = 200;
-    sun.shadow.camera.bottom = -200;
-    sun.shadow.camera.far = 600;
+    sun.shadow.camera.left = -150;
+    sun.shadow.camera.right = 150;
+    sun.shadow.camera.top = 150;
+    sun.shadow.camera.bottom = -150;
+    sun.shadow.camera.far = 500;
     this.scene.add(sun);
 
-    // Загружаем текстуры
-    const loader = new THREE.TextureLoader();
-    const groundTex = loader.load('./assets/cmr/track/grass1.png');
-    const roadTex = loader.load('./assets/cmr/track/gravel1.png');
-
-    // Создаём мир (генерируется процедурно)
-    this.world = new World(this.scene, groundTex, roadTex);
-
-    // Спавним машину над дорогой
-    const spawnPoint = this.world.road.points[0];
-    this.car = new Car(this.scene, spawnPoint);
+    this.track = new Track(this.scene);
+    this.car = new Car(this.scene);
 
     this.hud = new HUD();
     this.input = new Input();
@@ -88,8 +79,7 @@ export class Game {
 
     const dt = Math.min(this.clock.getDelta(), 0.1);
 
-    // Обновляем машину с учётом рельефа
-    this.car.update(dt, this.input, this.world);
+    this.car.update(dt, this.input);
     this.car.updateCamera(this.camera);
     this.hud.update(dt, this.car);
 
