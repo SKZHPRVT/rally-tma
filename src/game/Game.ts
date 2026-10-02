@@ -51,9 +51,10 @@ export class Game {
     sun.shadow.camera.far = 500;
     this.scene.add(sun);
 
-    this.currentSeed = this.weeklySeed();
+    // === КАЖДЫЙ ЗАПУСК — НОВЫЙ МИР ===
+    this.currentSeed = this.randomSeed();
     
-    // Первый биом — случайный по seed
+    // Биом тоже случайный (по seed)
     this.track = new Track(this.scene, this.currentSeed);
     
     const spawnPos = this.track.getSpawnPoint();
@@ -70,15 +71,6 @@ export class Game {
 
     this.clock = new THREE.Clock();
     window.addEventListener('resize', () => this.onResize());
-  }
-
-  private weeklySeed(): number {
-    const now = new Date();
-    const year = now.getFullYear();
-    const start = new Date(year, 0, 1);
-    const days = Math.floor((now.getTime() - start.getTime()) / 86400000);
-    const week = Math.ceil((days + start.getDay() + 1) / 7);
-    return year * 100 + week;
   }
 
   private randomSeed(): number {
