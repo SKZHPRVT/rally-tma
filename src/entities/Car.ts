@@ -16,8 +16,10 @@ export class Car {
   drag: number = 0.5;
   turnSpeed: number = 1.8;
 
-  private cameraTarget: THREE.Vector3 = new THREE.Vector3();
-  private cameraOffset: THREE.Vector3 = new THREE.Vector3();
+  // Сглаженные значения для камеры (чтобы избежать дрожи)
+  private smoothBackDist: number = 7;
+  private smoothHeight: number = 2.2;
+  private smoothFov: number = 70;
 
   constructor(scene: THREE.Scene, spawnPos?: THREE.Vector3, spawnRot: number = 0) {
     this.mesh = new THREE.Group();
@@ -66,6 +68,11 @@ export class Car {
     this.angularVelocity = 0;
     this.mesh.position.copy(this.position);
     this.mesh.rotation.y = this.rotation;
+    
+    // Сброс сглаживания
+    this.smoothBackDist = 7;
+    this.smoothHeight = 2.2;
+    this.smoothFov = 70;
   }
 
   update(dt: number, input: Input) {
@@ -100,32 +107,39 @@ export class Car {
   updateCamera(camera: THREE.PerspectiveCamera) {
     const speedRatio = Math.min(Math.abs(this.velocity) / this.maxSpeed, 1);
 
-    const backDist = -7 - speedRatio * 0.5;
-    const height = 2.2 + speedRatio * 0.15;
+    // Целевые значения для камеры
+    const targetBackDist = 7 + speedRatio * 0.8;
+    const targetHeight = 2.3 + speedRatio * 0.2;
+    const targetFov = 70 + speedRatio * 3;
 
-    // Позиция камеры — БЕЗ lerp для стабильности (иначе дёргается)
-    this.cameraOffset.set(0, height, backDist).applyAxisAngle(
-      new THREE.Vector3(0, 1, 0), this.rotation
+    // Плавное сглаживание САМИХ ПАРАМЕТРОВ, а не позиции
+    const smoothFactor = 1 - Math.pow(0.001, 0.016); // ~0.15 на 60 FPS
+    this.smoothBackDist += (targetBackDist - this.smoothBackDist) * smoothFactor;
+    this.smoothHeight += (targetHeight - this.smoothHeight) * smoothFactor;
+    this.smoothFov += (targetFov - this.smoothFov) * smoothFactor;
+
+    // === КЛЮЧЕВОЕ: камера СТРОГО привязана к машине ===
+    // Без lerp — прямо в локальных координатах
+    const offset = new THREE.Vector3(0, this.smoothHeight, -this.smoothBackDist);
+    offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation);
+
+    // Прямо ставим камеру (никакого lerp!)
+    camera.position.set(
+      this.position.x + offset.x,
+      this.position.y + offset.y,
+      this.position.z + offset.z
     );
-    this.cameraTarget.copy(this.position).add(this.cameraOffset);
-    
-    // Быстрый lerp, но с ограничением — не «плывёт»
-    camera.position.lerp(this.cameraTarget, 0.25);
 
-    // Смотрим на машину (немного вверх)
+    // Смотрим на машину
     camera.lookAt(
       this.position.x,
       this.position.y + 0.8,
       this.position.z
     );
 
-    // FOV фиксированный + минимальная динамика (без дёрганья)
-    const targetFov = 70 + speedRatio * 2;
-    const newFov = camera.fov + (targetFov - camera.fov) * 0.1;
-    
-    // Обновляем проекцию ТОЛЬКО если разница заметна
-    if (Math.abs(newFov - camera.fov) > 0.05) {
-      camera.fov = newFov;
+    // FOV — плавно, но через smoothFov
+    if (Math.abs(this.smoothFov - camera.fov) > 0.05) {
+      camera.fov = this.smoothFov;
       camera.updateProjectionMatrix();
     }
   }
