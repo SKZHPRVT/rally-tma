@@ -15,7 +15,7 @@ export class EngineSound {
 
     this.filter = this.ctx.createBiquadFilter();
     this.filter.type = 'lowpass';
-    this.filter.frequency.value = 800;
+    this.filter.frequency.value = 700;
 
     this.gain = this.ctx.createGain();
     this.gain.gain.value = 0;
@@ -30,7 +30,6 @@ export class EngineSound {
     try {
       this.osc.start();
       this.started = true;
-      console.log('[engine] started');
     } catch (e) {
       console.log('[engine] start failed:', e);
     }
@@ -51,26 +50,18 @@ export class EngineSound {
     const speedRatio = Math.min(speed / maxSpeed, 1);
     const now = this.ctx.currentTime;
 
-    // Обороты: 60 → 250 Гц
-    // На 95%+ — фиксируем на 250, чтобы не пищал
+    // 60 → 200 Гц
     let targetFreq;
     if (speedRatio > 0.95) {
-      targetFreq = 250;
+      targetFreq = 200;
     } else {
-      targetFreq = 60 + speedRatio * 190; // 60-250
+      targetFreq = 60 + speedRatio * 140; // 60-200
     }
     this.osc.frequency.linearRampToValueAtTime(targetFreq, now + 0.1);
 
-    // Фильтр
-    let targetFilter;
-    if (speedRatio > 0.95) {
-      targetFilter = 1400;
-    } else {
-      targetFilter = 800 + speedRatio * 600; // 800-1400
-    }
+    let targetFilter = 700 + speedRatio * 500; // 700-1200
     this.filter.frequency.linearRampToValueAtTime(targetFilter, now + 0.1);
 
-    // Громкость
     let targetGain;
     if (gas) {
       targetGain = 0.15;
