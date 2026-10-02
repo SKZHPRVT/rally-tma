@@ -5,6 +5,19 @@ export class Input {
   right: boolean = false;
 
   constructor() {
+    // Разблокировка AudioContext при первом тапе
+    const unlockAudio = () => {
+      const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (AC) {
+        const ctx = new AC();
+        if (ctx.state === 'suspended') ctx.resume();
+      }
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('mousedown', unlockAudio);
+    };
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('mousedown', unlockAudio, { once: true });
+
     document.addEventListener('keydown', (e) => this.onKey(e, true));
     document.addEventListener('keyup', (e) => this.onKey(e, false));
 
@@ -12,15 +25,6 @@ export class Input {
     this.bindButton('btn-brake', 'brake');
     this.bindButton('btn-left', 'left');
     this.bindButton('btn-right', 'right');
-
-    // Разблокировка аудио при первом тапе
-    document.addEventListener('touchstart', () => {
-      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (Ctx) {
-        const ctx = new Ctx();
-        if (ctx.state === 'suspended') ctx.resume();
-      }
-    }, { once: true });
   }
 
   onKey(e: KeyboardEvent, down: boolean) {
@@ -38,6 +42,7 @@ export class Input {
     const set = (val: boolean) => { (this as any)[prop] = val; };
     btn.addEventListener('touchstart', (e) => { e.preventDefault(); set(true); });
     btn.addEventListener('touchend', (e) => { e.preventDefault(); set(false); });
+    btn.addEventListener('touchcancel', (e) => { e.preventDefault(); set(false); });
     btn.addEventListener('mousedown', (e) => { e.preventDefault(); set(true); });
     btn.addEventListener('mouseup', (e) => { e.preventDefault(); set(false); });
     btn.addEventListener('mouseleave', () => set(false));

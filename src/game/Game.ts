@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import { Car } from '../entities/Car';
 import { Track } from '../entities/Track';
-import { Skybox } from '../entities/Skybox';
-import { Environment } from '../entities/Environment';
 import { HUD } from '../ui/HUD';
 import { Input } from './Input';
 import { EngineSound } from '../audio/EngineSound';
@@ -14,8 +12,6 @@ export class Game {
   camera: THREE.PerspectiveCamera;
   car: Car;
   track: Track;
-  skybox: Skybox;
-  environment: Environment;
   hud: HUD;
   input: Input;
   engineSound: EngineSound;
@@ -33,7 +29,7 @@ export class Game {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87ceeb);
-    this.scene.fog = new THREE.Fog(0x87ceeb, 200, 600);
+    this.scene.fog = new THREE.Fog(0x87ceeb, 250, 700);
 
     this.camera = new THREE.PerspectiveCamera(
       70, window.innerWidth / window.innerHeight, 0.1, 2000
@@ -42,10 +38,7 @@ export class Game {
     const ambient = new THREE.AmbientLight(0xffffff, 0.65);
     this.scene.add(ambient);
 
-    const hemi = new THREE.HemisphereLight(0x87ceeb, 0x4a3520, 0.5);
-    this.scene.add(hemi);
-
-    const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.9);
     sun.position.set(50, 100, 50);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
@@ -57,9 +50,7 @@ export class Game {
     sun.shadow.camera.far = 500;
     this.scene.add(sun);
 
-    this.skybox = new Skybox(this.scene);
     this.track = new Track(this.scene);
-    this.environment = new Environment(this.scene, this.track.textures);
     this.car = new Car(this.scene);
 
     this.hud = new HUD();
@@ -91,7 +82,8 @@ export class Game {
     this.car.update(dt, this.input);
     this.car.updateCamera(this.camera);
     this.hud.update(dt, this.car);
-    this.engineSound.update(this.car.velocity, this.input.gas);
+
+    this.engineSound.update(this.car.velocity, this.input.gas, this.input.brake);
 
     this.renderer.render(this.scene, this.camera);
   }
