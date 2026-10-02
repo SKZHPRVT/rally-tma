@@ -16,6 +16,9 @@ export class Car {
   drag: number = 0.5;
   turnSpeed: number = 1.8;
 
+  private cameraTarget: THREE.Vector3 = new THREE.Vector3();
+  private cameraOffset: THREE.Vector3 = new THREE.Vector3();
+
   constructor(scene: THREE.Scene, spawnPos?: THREE.Vector3, spawnRot: number = 0) {
     this.mesh = new THREE.Group();
     this.position = spawnPos ? spawnPos.clone() : new THREE.Vector3(0, 0.5, 0);
@@ -100,16 +103,30 @@ export class Car {
     const backDist = -7 - speedRatio * 0.5;
     const height = 2.2 + speedRatio * 0.15;
 
-    const behind = new THREE.Vector3(0, height, backDist).applyAxisAngle(
+    // Позиция камеры — БЕЗ lerp для стабильности (иначе дёргается)
+    this.cameraOffset.set(0, height, backDist).applyAxisAngle(
       new THREE.Vector3(0, 1, 0), this.rotation
     );
-    const targetPos = this.position.clone().add(behind);
-    camera.position.lerp(targetPos, 0.15);
+    this.cameraTarget.copy(this.position).add(this.cameraOffset);
+    
+    // Быстрый lerp, но с ограничением — не «плывёт»
+    camera.position.lerp(this.cameraTarget, 0.25);
 
-    camera.lookAt(this.position.x, this.position.y + 0.5, this.position.z);
+    // Смотрим на машину (немного вверх)
+    camera.lookAt(
+      this.position.x,
+      this.position.y + 0.8,
+      this.position.z
+    );
 
+    // FOV фиксированный + минимальная динамика (без дёрганья)
     const targetFov = 70 + speedRatio * 2;
-    camera.fov += (targetFov - camera.fov) * 0.05;
-    camera.updateProjectionMatrix();
+    const newFov = camera.fov + (targetFov - camera.fov) * 0.1;
+    
+    // Обновляем проекцию ТОЛЬКО если разница заметна
+    if (Math.abs(newFov - camera.fov) > 0.05) {
+      camera.fov = newFov;
+      camera.updateProjectionMatrix();
+    }
   }
 }
