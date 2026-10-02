@@ -4,18 +4,17 @@ import { BIOMES, BiomeId, BIOME_IDS } from '../world/Biomes';
 export class Track {
   public roadPoints: THREE.Vector3[] = [];
   public startPoint: THREE.Vector3 = new THREE.Vector3();
-  public biome: BiomeId = 'forest';
+  public biome: BiomeId = 'classic';
   
   private scene: THREE.Scene;
   private meshes: THREE.Object3D[] = [];
-  private textures: { [key: string]: THREE.Texture } = {};
+  private textures: { [key: string]: THREE.Texture | null } = {};
   private seed: number = 0;
 
   constructor(scene: THREE.Scene, seed: number = 1, biome?: BiomeId) {
     this.scene = scene;
     this.seed = seed;
     
-    // Выбор биома: либо явно, либо случайно по seed
     if (biome) {
       this.biome = biome;
     } else {
@@ -33,13 +32,18 @@ export class Track {
     const loader = new THREE.TextureLoader();
     const cfg = BIOMES[this.biome];
     
-    const paths = {
+    const pathMap: { [key: string]: string | null } = {
       ground: cfg.groundTexture,
       road:   cfg.roadTexture,
       bank:   cfg.bankTexture,
     };
     
-    for (const [key, path] of Object.entries(paths)) {
+    for (const [key, path] of Object.entries(pathMap)) {
+      if (path === null) {
+        this.textures[key] = null;
+        continue;
+      }
+      
       const tex = loader.load(path);
       tex.wrapS = THREE.RepeatWrapping;
       tex.wrapT = THREE.RepeatWrapping;
@@ -53,7 +57,6 @@ export class Track {
     const rand = this.seededRandom(this.seed);
     const cfg = BIOMES[this.biome];
     
-    // Фон и туман
     this.scene.background = new THREE.Color(cfg.backgroundColor);
     this.scene.fog = new THREE.Fog(cfg.fogColor, 250, 700);
     
@@ -95,13 +98,28 @@ export class Track {
   }
 
   private createGround(cfg: any) {
-    const tex = this.textures['ground'].clone();
+    const geo = new THREE.PlaneGeometry(3000, 3000, 1, 1);
+    
+    // === КЛАССИКА: плоский цвет без текстуры ===
+    if (this.textures['ground'] === null) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: cfg.groundColor,
+      });
+      const ground = new THREE.Mesh(geo, mat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = 0;
+      ground.receiveShadow = true;
+      this.add(ground);
+      return;
+    }
+    
+    // === ОСТАЛЬНЫЕ: текстура ===
+    const tex = this.textures['ground']!.clone();
     tex.needsUpdate = true;
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(80, 80);
     
-    const geo = new THREE.PlaneGeometry(3000, 3000, 1, 1);
     const mat = new THREE.MeshStandardMaterial({
       map: tex,
       color: cfg.groundColor,
@@ -138,26 +156,14 @@ export class Track {
     const roadWidth = cfg.roadWidth;
     const segmentLength = this.roadPoints[0].distanceTo(this.roadPoints[1]);
 
-    const roadTex = this.textures['road'].clone();
+    const roadTex = this.textures['road']!.clone();
     roadTex.needsUpdate = true;
     roadTex.wrapS = THREE.RepeatWrapping;
     roadTex.wrapT = THREE.RepeatWrapping;
     roadTex.repeat.set(roadWidth / 4, segmentLength / 4);
 
-    const bankTex = this.textures['bank'].clone();
-    bankTex.needsUpdate = true;
-    bankTex.wrapS = THREE.RepeatWrapping;
-    bankTex.wrapT = THREE.RepeatWrapping;
-    bankTex.repeat.set(2, segmentLength / 4);
-
     const roadMat = new THREE.MeshStandardMaterial({
       map: roadTex,
-      polygonOffset: true,
-      polygonOffsetFactor: -1,
-      polygonOffsetUnits: -1,
-    });
-    const bankMat = new THREE.MeshStandardMaterial({
-      map: bankTex,
       polygonOffset: true,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
@@ -172,7 +178,6 @@ export class Track {
       dir.normalize();
       const angle = Math.atan2(dir.x, dir.z);
 
-      // Дорога
       const roadGeo = new THREE.PlaneGeometry(roadWidth, length + 4);
       const road = new THREE.Mesh(roadGeo, roadMat);
       road.position.copy(mid);
@@ -181,6 +186,25 @@ export class Track {
       road.rotation.z = angle;
       road.receiveShadow = true;
       this.add(road);
+    }
+    
+    // === ОБОЧИНЫ (только если bankTexture не null) ===
+    if (this.textures['bank'] !== null) {
+      const bankTex = this.textures['bank']!.clone();
+      bankTex.needsUpdate = true;
+      bankTex.wrapS = THREE.RepeatWrapping;
+      bankTex.wrapT = THREE.RepeatWrapping;
+      bankTex.repeat.set(2, segmentLength / 4);
+      
+      const bankMat = new THREE.MeshStandardMaterial({
+        map: bankTex,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
+      });
+      
+      // Пока пропускаем обочины для простоты — они не критичны
+      // (можно добавить позже как отдельный слой)
     }
   }
 

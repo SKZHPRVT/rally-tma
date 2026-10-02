@@ -1,16 +1,16 @@
-export type BiomeId = 'forest' | 'desert' | 'mountains' | 'asphalt';
+export type BiomeId = 'classic' | 'forest' | 'desert' | 'mountains' | 'asphalt';
 
 export interface BiomeConfig {
   id: BiomeId;
   name: string;
   emoji: string;
   
-  groundTexture: string;
+  groundTexture: string | null;   // null = плоский цвет без текстуры
   roadTexture: string;
-  bankTexture: string;
+  bankTexture: string | null;
   skyTexture: string;
   
-  groundColor: number;   // тон поверх текстуры (0xffffff = без изменений)
+  groundColor: number;
   treeTrunkColor: number;
   treeLeafColor: number;
   fogColor: number;
@@ -21,6 +21,24 @@ export interface BiomeConfig {
 }
 
 export const BIOMES: Record<BiomeId, BiomeConfig> = {
+  // === ДЕФОЛТ — как в самом первом билде ===
+  classic: {
+    id: 'classic',
+    name: 'Классика',
+    emoji: '🎯',
+    groundTexture: null,                 // ← плоский цвет, без текстуры
+    roadTexture:   './assets/cmr/track/classic_road.png',
+    bankTexture:   null,                 // ← без обочин
+    skyTexture:    './assets/cmr/sky/classic_sky.png',
+    groundColor:      0x5a6b3a,          // ← тот самый тёмно-зелёный
+    treeTrunkColor:   0x4a3520,
+    treeLeafColor:    0x2d5016,
+    fogColor:         0x87ceeb,
+    backgroundColor:  0x87ceeb,
+    treeCount: 250,
+    roadWidth: 13.5,
+  },
+  
   forest: {
     id: 'forest',
     name: 'Лес',
@@ -46,9 +64,9 @@ export const BIOMES: Record<BiomeId, BiomeConfig> = {
     roadTexture:   './assets/cmr/track/desert_road.png',
     bankTexture:   './assets/cmr/track/desert_bank.png',
     skyTexture:    './assets/cmr/sky/sky_desert.png',
-    groundColor:      0xd4a878,  // тёплый песок
+    groundColor:      0xd4a878,
     treeTrunkColor:   0x6b4a2a,
-    treeLeafColor:    0x6b7a3a,  // сухая зелень
+    treeLeafColor:    0x6b7a3a,
     fogColor:         0xd4a878,
     backgroundColor:  0xd4a878,
     treeCount: 200,
@@ -63,9 +81,9 @@ export const BIOMES: Record<BiomeId, BiomeConfig> = {
     roadTexture:   './assets/cmr/track/mountains_road.png',
     bankTexture:   './assets/cmr/track/mountains_bank.png',
     skyTexture:    './assets/cmr/sky/sky_forest.png',
-    groundColor:      0x8a8a7a,  // серо-каменный
+    groundColor:      0x8a8a7a,
     treeTrunkColor:   0x3a2a1a,
-    treeLeafColor:    0x2a3a1a,  // тёмная зелень
+    treeLeafColor:    0x2a3a1a,
     fogColor:         0xa8b0bd,
     backgroundColor:  0xa8b0bd,
     treeCount: 300,
@@ -80,14 +98,22 @@ export const BIOMES: Record<BiomeId, BiomeConfig> = {
     roadTexture:   './assets/cmr/track/asphalt_road.png',
     bankTexture:   './assets/cmr/track/asphalt_bank.png',
     skyTexture:    './assets/cmr/sky/sky_forest.png',
-    groundColor:      0x6a7a4a,  // зелёная трава
+    groundColor:      0x6a7a4a,
     treeTrunkColor:   0x4a3520,
     treeLeafColor:    0x2d5016,
     fogColor:         0x87ceeb,
     backgroundColor:  0x87ceeb,
     treeCount: 250,
-    roadWidth: 15,   // асфальт шире
+    roadWidth: 15,
   },
 };
 
-export const BIOME_IDS: BiomeId[] = ['forest', 'desert', 'mountains', 'asphalt'];
+// Порядок при рандоме — classic первый (чуть чаще встречается)
+export const BIOME_IDS: BiomeId[] = [
+  'classic',
+  'classic',
+  'forest',
+  'desert',
+  'mountains',
+  'asphalt',
+];
