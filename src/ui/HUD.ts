@@ -34,8 +34,8 @@ export class HUD {
   onNewWorld: (() => void) | null = null;
 
   constructor() {
-    this.timerEl = document.getElementById('timer-value')!;
-    this.speedEl = document.getElementById('speed-value')!;
+    this.timerEl = document.getElementById('timer-display')!;
+    this.speedEl = document.getElementById('speed-display')!;
     this.menuBtn = document.getElementById('btn-menu')!;
     
     this.startModal = document.getElementById('start-modal')!;

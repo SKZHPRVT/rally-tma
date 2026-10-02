@@ -63,8 +63,7 @@
     
     html, body {
       width: 100%;
-      height: 100vh;
-      height: 100dvh;
+      height: 100%;
       overflow: hidden;
       background: #000;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -78,89 +77,78 @@
       user-select: none;
     }
     
-    canvas { display: block; width: 100%; height: 100%; }
-    
-    /* ============ GLASS UTILITY ============ */
-    .glass {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
-      border: 0.5px solid rgba(255, 255, 255, 0.15);
-      box-shadow:
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.25),
-        inset 0 -0.5px 0 rgba(0, 0, 0, 0.15),
-        0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-    
-    /* ============ HUD ============ */
-    #hud-top {
+    canvas {
+      display: block;
       position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 56px);
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      padding: 0 16px;
-      pointer-events: none;
-      z-index: 100;
+      inset: 0;
+      width: 100%;
+      height: 100%;
     }
     
-    .hud-pill {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 8px 20px;
-      border-radius: 22px;
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 0.5px solid rgba(255, 255, 255, 0.12);
-      box-shadow:
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
-        0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-    
-    .hud-value {
-      font-size: 22px;
-      font-weight: 700;
+    /* ============ HUD (минимал) ============ */
+    #timer-display {
+      position: fixed;
+      top: 8px;
+      left: 12px;
+      font-size: 26px;
+      font-weight: 800;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum";
-      letter-spacing: 0.3px;
-      line-height: 1.1;
+      letter-spacing: 0.5px;
+      color: #fff;
+      text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      pointer-events: none;
     }
     
-    .hud-label {
-      font-size: 9px;
+    #speed-display {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      font-size: 26px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+      letter-spacing: 0.5px;
+      color: #ff3b30;
+      text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(255, 59, 48, 0.5);
+      z-index: 100;
+      pointer-events: none;
+    }
+    
+    #speed-display .unit {
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 1.5px;
-      opacity: 0.55;
-      text-transform: uppercase;
-      margin-top: 2px;
+      opacity: 0.7;
+      margin-left: 4px;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.7);
     }
     
-    /* ============ КНОПКА МЕНЮ (иконка) ============ */
+    /* ============ КНОПКА МЕНЮ ============ */
     #btn-menu {
       position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 56px);
-      right: 16px;
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
+      top: 8px;
+      right: 110px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
       color: #fff;
       cursor: pointer;
       z-index: 100;
-      box-shadow:
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
-        0 4px 20px rgba(0, 0, 0, 0.3);
-      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s;
     }
     #btn-menu.show { display: flex; }
     #btn-menu:active {
@@ -186,7 +174,6 @@
       z-index: 20;
       box-shadow:
         inset 0 0.5px 0 rgba(255, 255, 255, 0.25),
-        inset 0 -0.5px 0 rgba(0, 0, 0, 0.15),
         0 8px 32px rgba(0, 0, 0, 0.4);
       transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
                   background 0.15s;
@@ -205,25 +192,25 @@
     }
     
     #btn-gas {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
+      bottom: 100px;
       right: 20px;
       width: 76px;
       height: 76px;
     }
     #btn-brake {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+      bottom: 20px;
       right: 20px;
       width: 76px;
       height: 76px;
     }
     #btn-left {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+      bottom: 56px;
       left: 20px;
       width: 76px;
       height: 76px;
     }
     #btn-right {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+      bottom: 56px;
       left: 112px;
       width: 76px;
       height: 76px;
@@ -258,7 +245,7 @@
       position: absolute;
       left: 12px;
       right: 12px;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+      bottom: 12px;
       padding: 20px;
       border-radius: 32px;
       background: rgba(30, 30, 35, 0.72);
@@ -275,14 +262,8 @@
     }
     
     @keyframes sheetUp {
-      from {
-        transform: translateY(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
     
     .sheet-handle {
@@ -310,7 +291,6 @@
       font-weight: 600;
       opacity: 0.55;
       margin-top: 4px;
-      letter-spacing: 0.2px;
     }
     
     .sheet-time {
@@ -325,10 +305,8 @@
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      color: transparent;
     }
     
-    /* ============ КНОПКИ В SHEET (СТИЛЬ iOS 26) ============ */
     .sheet-actions {
       display: flex;
       flex-direction: column;
@@ -354,17 +332,6 @@
       text-align: left;
       position: relative;
       overflow: hidden;
-      box-shadow:
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.15),
-        0 1px 3px rgba(0, 0, 0, 0.15);
-    }
-    
-    .action-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent);
-      pointer-events: none;
     }
     
     .action-btn:active {
@@ -375,14 +342,11 @@
     .action-btn.primary {
       background: rgba(10, 132, 255, 0.85);
       border-color: rgba(10, 132, 255, 1);
-      box-shadow:
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
-        0 4px 16px rgba(10, 132, 255, 0.4);
+      box-shadow: 0 4px 16px rgba(10, 132, 255, 0.4);
     }
     
     .action-btn.primary:active {
       background: rgba(10, 132, 255, 1);
-      transform: scale(0.97);
     }
     
     .action-btn .btn-icon {
@@ -453,16 +417,8 @@
 <body>
   <canvas id="game"></canvas>
   
-  <div id="hud-top">
-    <div class="hud-pill">
-      <div class="hud-value" id="timer-value">00:00.00</div>
-      <div class="hud-label">Time</div>
-    </div>
-    <div class="hud-pill">
-      <div class="hud-value" id="speed-value">0</div>
-      <div class="hud-label">km/h</div>
-    </div>
-  </div>
+  <div id="timer-display">00:00.00</div>
+  <div id="speed-display">0<span class="unit">km/h</span></div>
   
   <div id="btn-menu">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -485,7 +441,6 @@
     <svg viewBox="0 0 24 24"><path d="M20 12l-14 8V4z"/></svg>
   </div>
   
-  <!-- === START SHEET === -->
   <div id="start-modal" class="sheet show">
     <div class="sheet-backdrop"></div>
     <div class="sheet-panel">
@@ -511,7 +466,6 @@
     </div>
   </div>
   
-  <!-- === ARCH SHEET === -->
   <div id="arch-modal" class="sheet">
     <div class="sheet-backdrop"></div>
     <div class="sheet-panel">
@@ -543,7 +497,6 @@
     </div>
   </div>
   
-  <!-- === FINISH SHEET === -->
   <div id="finish-modal" class="sheet">
     <div class="sheet-backdrop"></div>
     <div class="sheet-panel">
