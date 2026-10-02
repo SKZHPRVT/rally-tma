@@ -26,21 +26,17 @@ export class Track {
     }
   }
 
+  // ЗЕМЛЯ — просто цвет, БЕЗ текстуры (чтобы не съезжало)
   createGround(scene: THREE.Scene) {
-    const grassTex = this.textures['grass1'].clone();
-    grassTex.needsUpdate = true;
-    grassTex.wrapS = THREE.RepeatWrapping;
-    grassTex.wrapT = THREE.RepeatWrapping;
-    grassTex.repeat.set(150, 150);
-
     const geo = new THREE.PlaneGeometry(3000, 3000, 1, 1);
-    const mat = new THREE.MeshStandardMaterial({ map: grassTex });
+    const mat = new THREE.MeshStandardMaterial({ color: 0x5a6b3a }); // тёмно-зелёный
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
   }
 
+  // ДОРОГА — 3 полосы (bank | gravel | bank)
   createRoad(scene: THREE.Scene) {
     const points: THREE.Vector3[] = [];
     for (let i = 0; i < 80; i++) {
@@ -59,8 +55,13 @@ export class Track {
       const dir = b.clone().sub(a).normalize();
       const angle = Math.atan2(dir.x, dir.z);
 
+      // ЦЕНТР — gravel
       this.addStrip(scene, mid, angle, roadVariants[i % 3], 6, 0);
+
+      // ЛЕВАЯ ОБОЧИНА — bank
       this.addStrip(scene, mid, angle, bankVariants[i % 3], 3, -4.5);
+
+      // ПРАВАЯ ОБОЧИНА — bank
       this.addStrip(scene, mid, angle, bankVariants[i % 3], 3, 4.5);
     }
   }
@@ -84,7 +85,8 @@ export class Track {
     const strip = new THREE.Mesh(geo, mat);
 
     const offset = new THREE.Vector3(offsetX, 0, 0).applyAxisAngle(
-      new THREE.Vector3(0, 1, 0), angle
+      new THREE.Vector3(0, 1, 0),
+      angle
     );
 
     strip.position.copy(mid).add(offset);
@@ -95,6 +97,7 @@ export class Track {
     scene.add(strip);
   }
 
+  // ДЕРЕВЬЯ — как были
   scatterTrees(scene: THREE.Scene) {
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3520 });
     const leafMat = new THREE.MeshStandardMaterial({ color: 0x2d5016 });

@@ -18,12 +18,12 @@
     
     #top-hud {
       position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 56px);
+      top: 4px;
       left: 0; right: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       pointer-events: none;
       z-index: 10;
     }
@@ -32,27 +32,27 @@
       background: rgba(0,0,0,0.65);
       border: 2px solid rgba(255,255,255,0.25);
       border-radius: 10px;
-      padding: 6px 16px;
+      padding: 4px 14px;
       color: #fff;
       font-weight: bold;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
     }
     
     #timer {
-      font-size: 22px;
+      font-size: 20px;
       letter-spacing: 1px;
-      min-width: 130px;
+      min-width: 120px;
       text-align: center;
     }
     
     #speed {
-      font-size: 22px;
-      min-width: 110px;
+      font-size: 20px;
+      min-width: 100px;
       text-align: center;
     }
     
     #speed span {
-      font-size: 12px;
+      font-size: 11px;
       opacity: 0.7;
       font-weight: normal;
     }
@@ -81,10 +81,10 @@
       transform: scale(0.92);
     }
     
-    #btn-gas { bottom: calc(env(safe-area-inset-bottom, 0px) + 110px); right: 20px; width: 80px; height: 80px; }
-    #btn-brake { bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); right: 20px; width: 80px; height: 80px; }
-    #btn-left { bottom: calc(env(safe-area-inset-bottom, 0px) + 60px); left: 20px; width: 80px; height: 80px; }
-    #btn-right { bottom: calc(env(safe-area-inset-bottom, 0px) + 60px); left: 120px; width: 80px; height: 80px; }
+    #btn-gas { bottom: 110px; right: 20px; width: 80px; height: 80px; }
+    #btn-brake { bottom: 20px; right: 20px; width: 80px; height: 80px; }
+    #btn-left { bottom: 60px; left: 20px; width: 80px; height: 80px; }
+    #btn-right { bottom: 60px; left: 120px; width: 80px; height: 80px; }
   </style>
 </head>
 <body>

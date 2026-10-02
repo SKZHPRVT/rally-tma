@@ -49,7 +49,6 @@ export class Car {
       this.mesh.add(w);
     }
 
-    // Fake shadow прямо под машиной
     const shadowGeo = new THREE.CircleGeometry(2.0, 16);
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
@@ -100,9 +99,9 @@ export class Car {
   updateCamera(camera: THREE.PerspectiveCamera) {
     const speedRatio = Math.min(Math.abs(this.velocity) / this.maxSpeed, 1);
 
-    // Дистанция почти не меняется — от -7 до -7.8 (было до -8.5)
-    const backDist = -7 - speedRatio * 0.8;
-    const height = 2.2 + speedRatio * 0.2;
+    // Отъезд минимальный: от -7 до -7.5 (было -7.8)
+    const backDist = -7 - speedRatio * 0.5;
+    const height = 2.2 + speedRatio * 0.15;
 
     const behind = new THREE.Vector3(0, height, backDist).applyAxisAngle(
       new THREE.Vector3(0, 1, 0), this.rotation
@@ -112,8 +111,8 @@ export class Car {
 
     camera.lookAt(this.position.x, this.position.y + 0.5, this.position.z);
 
-    // FOV — очень мягко (70 → 74)
-    const targetFov = 70 + speedRatio * 4;
+    // FOV почти не меняется — 70 → 72
+    const targetFov = 70 + speedRatio * 2;
     camera.fov += (targetFov - camera.fov) * 0.05;
     camera.updateProjectionMatrix();
   }
