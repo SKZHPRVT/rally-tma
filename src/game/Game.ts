@@ -124,7 +124,7 @@ export class Game {
     if (!this.running) return;
     requestAnimationFrame(() => this.loop());
 
-    const dt = Math.min(this.clock.getDelta(), 0.033);
+    const dt = Math.min(this.clock.getDelta(), 0.1);
 
     this.input.enabled = this.hud.canControl();
     if (!this.input.enabled) {
