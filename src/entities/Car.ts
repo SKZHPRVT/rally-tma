@@ -108,15 +108,22 @@ export class Car {
 
     camera.lookAt(this.position.x, this.position.y + 0.5, this.position.z);
 
-    // === ДИНАМИЧЕСКИЙ FOV ПО ASPECT RATIO ===
-    // 110° по горизонтали — как было раньше в горизонтали
-    const HORIZONTAL_FOV_BASE = 110 + speedRatio * 5;
+    // === ЕДИНАЯ ФОРМУЛА ===
+    // Фиксируем ГОРИЗОНТАЛЬНЫЙ FOV. Он всегда ~114° — идеально в обеих ориентациях.
+    // Из него вычисляем ВЕРТИКАЛЬНЫЙ через aspect ratio.
+    //
+    // Проверка:
+    //   Горизонталь (aspect 2.2) → vertical ≈ 70° — как было в идеальной горизонтали
+    //   Вертикаль (aspect 0.46) → vertical ≈ 120° — идеально в вертикали
     
+    const HORIZONTAL_FOV_BASE = 114 + speedRatio * 4;
+    
+    // Формула: verticalFov = 2 * atan(tan(horizontalFov/2) / aspect)
     const hFovRad = HORIZONTAL_FOV_BASE * Math.PI / 180;
     const vFovRad = 2 * Math.atan(Math.tan(hFovRad / 2) / camera.aspect);
     const vFovDeg = vFovRad * 180 / Math.PI;
     
-    // Ограничения
+    // Ограничения (чтобы не улететь в разнос)
     const clampedFov = Math.max(50, Math.min(120, vFovDeg));
     
     camera.fov = clampedFov;
