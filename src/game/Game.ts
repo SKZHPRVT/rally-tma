@@ -51,7 +51,11 @@ export class Game {
     this.scene.add(sun);
 
     this.track = new Track(this.scene);
-    this.car = new Car(this.scene);
+
+    // Спавн машины на дороге
+    const spawnPoint = this.track.roadPoints[0].clone();
+    spawnPoint.y = 0.5;
+    this.car = new Car(this.scene, spawnPoint);
 
     this.hud = new HUD();
     this.input = new Input();
