@@ -130,49 +130,94 @@ export class Track {
   }
 
   private createRingRoad(rand: () => number, cfg: any) {
-    const numPoints = 80;
+    const numPoints = 96;
     const baseRadius = 320;
     const centerX = 0;
     const centerZ = -400;
 
     this.roadPoints = [];
 
-    // === ИНТЕРЕСНАЯ ФОРМА: три частоты шума ===
+    // === 1. АРХЕТИП ФОРМЫ ===
+    // 0 = круг, 1 = овал, 2 = пятно, 3 = хаос
+    const archetype = Math.floor(rand() * 4);
+    
+    // === 2. ROUGHNESS — управляемая кривизна ===
+    const roughness = rand();
+    
+    console.log('[track] archetype:', archetype, 'roughness:', roughness.toFixed(2));
+
+    // Фазы — разные на каждом сиде
     const phase1 = rand() * Math.PI * 2;
     const phase2 = rand() * Math.PI * 2;
     const phase3 = rand() * Math.PI * 2;
+    const phase4 = rand() * Math.PI * 2;
+    const phase5 = rand() * Math.PI * 2;
     
-    const amp1 = 0.5 + rand() * 1.0;   // крупные лепестки
-    const amp2 = 0.3 + rand() * 0.7;   // средние волны
-    const amp3 = 0.1 + rand() * 0.4;   // мелкая рябь
-
-    // Тип формы: 0 = круглая, 1 = вытянутая, 2 = лепестки
-    const shapeType = Math.floor(rand() * 3);
+    // Амплитуды для разных частот
+    const amp1 = 0.2 + rand() * 0.6;
+    const amp2 = 0.1 + roughness * 0.8;
+    const amp3 = 0.05 + roughness * 0.6;
+    const amp4 = roughness * 0.4;
+    const amp5 = roughness * roughness * 0.3;
     
     // Коэффициенты вытянутости
     let stretchX = 1;
     let stretchZ = 1;
     
-    if (shapeType === 1) {
-      // Вытянутая (овал)
-      const stretch = 0.5 + rand() * 0.7;
+    if (archetype === 1) {
+      const stretch = 0.4 + rand() * 0.6;
       stretchX = stretch;
       stretchZ = 1 / stretch;
+    }
+    
+    if (archetype === 3) {
+      stretchX = 0.5 + rand() * 1.0;
+      stretchZ = 0.5 + rand() * 1.0;
+    }
+
+    // Дополнительные "выступы" — резкие пики радиуса
+    const bumpCount = Math.floor(roughness * 6);
+    const bumps: { angle: number, width: number, strength: number }[] = [];
+    for (let i = 0; i < bumpCount; i++) {
+      bumps.push({
+        angle: rand() * Math.PI * 2,
+        width: 0.2 + rand() * 0.5,
+        strength: 0.3 + rand() * 0.8,
+      });
     }
 
     for (let i = 0; i < numPoints; i++) {
       const t = i / numPoints;
       const angle = t * Math.PI * 2;
       
+      // Многочастотный шум
       const n1 = Math.sin(angle * 2 + phase1) * amp1;
       const n2 = Math.sin(angle * 3 + phase2) * amp2;
       const n3 = Math.sin(angle * 5 + phase3) * amp3;
+      const n4 = Math.sin(angle * 8 + phase4) * amp4;
+      const n5 = Math.sin(angle * 13 + phase5) * amp5;
       
-      // Лепестки (для shapeType 2)
-      const petals = shapeType === 2 ? Math.sin(angle * 4 + phase1) * 0.4 : 0;
+      // Выступы
+      let bumpMod = 0;
+      for (const bump of bumps) {
+        let diff = angle - bump.angle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        
+        const falloff = Math.exp(-(diff * diff) / (bump.width * bump.width));
+        bumpMod += falloff * bump.strength;
+      }
       
-      const radiusMod = 1 + (n1 + n2 + n3 + petals) * 0.25;
-      const radius = baseRadius * radiusMod;
+      // Пятно (archetype 2)
+      let blobMod = 0;
+      if (archetype === 2) {
+        blobMod = (Math.sin(angle * 1.5 + phase1) * 0.4 + 
+                   Math.sin(angle * 2.5 + phase2) * 0.3);
+      }
+      
+      // Итоговый модификатор
+      const radiusMod = 1 + (n1 + n2 + n3 + n4 + n5 + bumpMod + blobMod) * 0.35;
+      const radius = baseRadius * Math.max(0.3, radiusMod);
       
       const x = centerX + Math.cos(angle) * radius * stretchX;
       const z = centerZ + Math.sin(angle) * radius * stretchZ;
@@ -279,26 +324,42 @@ export class Track {
     const trunkMat = new THREE.MeshStandardMaterial({ color: cfg.treeTrunkColor });
     const leafMat = new THREE.MeshStandardMaterial({ color: cfg.treeLeafColor });
 
-    const centerX = 0;
-    const centerZ = -400;
-    const ringRadius = 320;
-    const minDistFromRoad = 22;
     const targetCount = cfg.treeCount;
+
+    // Максимальный радиус дороги
+    let maxRoadRadius = 0;
+    for (const p of this.roadPoints) {
+      const dx = p.x;
+      const dz = p.z - (-400);
+      const r = Math.sqrt(dx * dx + dz * dz);
+      if (r > maxRoadRadius) maxRoadRadius = r;
+    }
+    
+    const minDistFromRoad = 25;
 
     let placed = 0;
     let attempts = 0;
 
-    while (placed < targetCount && attempts < targetCount * 10) {
+    while (placed < targetCount && attempts < targetCount * 15) {
       attempts++;
-      const x = (rand() - 0.5) * 2000;
-      const z = (rand() - 0.5) * 2000;
+      
+      const angle = rand() * Math.PI * 2;
+      const radius = maxRoadRadius + minDistFromRoad + rand() * 250;
+      
+      const x = Math.cos(angle) * radius + 0;
+      const z = Math.sin(angle) * radius + (-400);
 
-      const dx = x - centerX;
-      const dz = z - centerZ;
-      const distFromCenter = Math.sqrt(dx * dx + dz * dz);
-      const distFromRoad = Math.abs(distFromCenter - ringRadius);
-
-      if (distFromRoad < minDistFromRoad || distFromRoad > 200) continue;
+      // Проверка — не рядом ли с дорогой
+      let tooClose = false;
+      for (const p of this.roadPoints) {
+        const ddx = x - p.x;
+        const ddz = z - p.z;
+        if (ddx * ddx + ddz * ddz < minDistFromRoad * minDistFromRoad) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (tooClose) continue;
 
       const tree = new THREE.Group();
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3, 6), trunkMat);
