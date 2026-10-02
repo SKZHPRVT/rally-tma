@@ -1,11 +1,11 @@
-export type BiomeId = 'classic' | 'forest' | 'desert' | 'mountains' | 'asphalt';
+export type BiomeId = 'classic' | 'forest' | 'desert' | 'mountains' | 'asphalt' | 'mix';
 
 export interface BiomeConfig {
   id: BiomeId;
   name: string;
   emoji: string;
   
-  groundTexture: string | null;   // null = плоский цвет без текстуры
+  groundTexture: string | null;
   roadTexture: string;
   bankTexture: string | null;
   skyTexture: string;
@@ -21,16 +21,15 @@ export interface BiomeConfig {
 }
 
 export const BIOMES: Record<BiomeId, BiomeConfig> = {
-  // === ДЕФОЛТ — как в самом первом билде ===
   classic: {
     id: 'classic',
     name: 'Классика',
     emoji: '🎯',
-    groundTexture: null,                 // ← плоский цвет, без текстуры
+    groundTexture: null,
     roadTexture:   './assets/cmr/track/classic_road.png',
-    bankTexture:   null,                 // ← без обочин
+    bankTexture:   null,
     skyTexture:    './assets/cmr/sky/classic_sky.png',
-    groundColor:      0x5a6b3a,          // ← тот самый тёмно-зелёный
+    groundColor:      0x5a6b3a,
     treeTrunkColor:   0x4a3520,
     treeLeafColor:    0x2d5016,
     fogColor:         0x87ceeb,
@@ -106,14 +105,31 @@ export const BIOMES: Record<BiomeId, BiomeConfig> = {
     treeCount: 250,
     roadWidth: 15,
   },
+  
+  mix: {
+    id: 'mix',
+    name: 'Микс',
+    emoji: '🎨',
+    groundTexture: './assets/cmr/track/desert_bank.png',
+    roadTexture:   './assets/cmr/track/forest_road.png',
+    bankTexture:   './assets/cmr/track/forest_bank.png',
+    skyTexture:    './assets/cmr/sky/sky_desert.png',
+    groundColor:      0xb89878,
+    treeTrunkColor:   0x5a3a22,
+    treeLeafColor:    0x4a6a2a,
+    fogColor:         0xd8b888,
+    backgroundColor:  0xd8b888,
+    treeCount: 350,
+    roadWidth: 14.5,
+  },
 };
 
-// Порядок при рандоме — classic первый (чуть чаще встречается)
+// РАВНЫЕ ШАНСЫ — все биомы по одному разу
 export const BIOME_IDS: BiomeId[] = [
-  'classic',
   'classic',
   'forest',
   'desert',
   'mountains',
   'asphalt',
+  'mix',
 ];

@@ -100,7 +100,6 @@ export class Track {
   private createGround(cfg: any) {
     const geo = new THREE.PlaneGeometry(3000, 3000, 1, 1);
     
-    // === КЛАССИКА: плоский цвет без текстуры ===
     if (this.textures['ground'] === null) {
       const mat = new THREE.MeshStandardMaterial({
         color: cfg.groundColor,
@@ -113,7 +112,6 @@ export class Track {
       return;
     }
     
-    // === ОСТАЛЬНЫЕ: текстура ===
     const tex = this.textures['ground']!.clone();
     tex.needsUpdate = true;
     tex.wrapS = THREE.RepeatWrapping;
@@ -132,20 +130,52 @@ export class Track {
   }
 
   private createRingRoad(rand: () => number, cfg: any) {
-    const numPoints = 64;
-    const baseRadius = 350;
+    const numPoints = 80;
+    const baseRadius = 320;
     const centerX = 0;
     const centerZ = -400;
 
     this.roadPoints = [];
 
-    for (let i = 0; i < numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      const noiseVal = (rand() - 0.5) * 0.3;
-      const radius = baseRadius + noiseVal * 100;
+    // === ИНТЕРЕСНАЯ ФОРМА: три частоты шума ===
+    const phase1 = rand() * Math.PI * 2;
+    const phase2 = rand() * Math.PI * 2;
+    const phase3 = rand() * Math.PI * 2;
+    
+    const amp1 = 0.5 + rand() * 1.0;   // крупные лепестки
+    const amp2 = 0.3 + rand() * 0.7;   // средние волны
+    const amp3 = 0.1 + rand() * 0.4;   // мелкая рябь
 
-      const x = centerX + Math.cos(angle) * radius;
-      const z = centerZ + Math.sin(angle) * radius;
+    // Тип формы: 0 = круглая, 1 = вытянутая, 2 = лепестки
+    const shapeType = Math.floor(rand() * 3);
+    
+    // Коэффициенты вытянутости
+    let stretchX = 1;
+    let stretchZ = 1;
+    
+    if (shapeType === 1) {
+      // Вытянутая (овал)
+      const stretch = 0.5 + rand() * 0.7;
+      stretchX = stretch;
+      stretchZ = 1 / stretch;
+    }
+
+    for (let i = 0; i < numPoints; i++) {
+      const t = i / numPoints;
+      const angle = t * Math.PI * 2;
+      
+      const n1 = Math.sin(angle * 2 + phase1) * amp1;
+      const n2 = Math.sin(angle * 3 + phase2) * amp2;
+      const n3 = Math.sin(angle * 5 + phase3) * amp3;
+      
+      // Лепестки (для shapeType 2)
+      const petals = shapeType === 2 ? Math.sin(angle * 4 + phase1) * 0.4 : 0;
+      
+      const radiusMod = 1 + (n1 + n2 + n3 + petals) * 0.25;
+      const radius = baseRadius * radiusMod;
+      
+      const x = centerX + Math.cos(angle) * radius * stretchX;
+      const z = centerZ + Math.sin(angle) * radius * stretchZ;
 
       this.roadPoints.push(new THREE.Vector3(x, 0.15, z));
     }
@@ -186,25 +216,6 @@ export class Track {
       road.rotation.z = angle;
       road.receiveShadow = true;
       this.add(road);
-    }
-    
-    // === ОБОЧИНЫ (только если bankTexture не null) ===
-    if (this.textures['bank'] !== null) {
-      const bankTex = this.textures['bank']!.clone();
-      bankTex.needsUpdate = true;
-      bankTex.wrapS = THREE.RepeatWrapping;
-      bankTex.wrapT = THREE.RepeatWrapping;
-      bankTex.repeat.set(2, segmentLength / 4);
-      
-      const bankMat = new THREE.MeshStandardMaterial({
-        map: bankTex,
-        polygonOffset: true,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -1,
-      });
-      
-      // Пока пропускаем обочины для простоты — они не критичны
-      // (можно добавить позже как отдельный слой)
     }
   }
 
@@ -270,7 +281,7 @@ export class Track {
 
     const centerX = 0;
     const centerZ = -400;
-    const ringRadius = 350;
+    const ringRadius = 320;
     const minDistFromRoad = 22;
     const targetCount = cfg.treeCount;
 
