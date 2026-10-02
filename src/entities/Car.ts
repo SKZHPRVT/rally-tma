@@ -108,8 +108,20 @@ export class Car {
 
     camera.lookAt(this.position.x, this.position.y + 0.5, this.position.z);
 
-    const targetFov = 70 + speedRatio * 2;
-    camera.fov += (targetFov - camera.fov) * 0.05;
+    // === ДИНАМИЧЕСКИЙ FOV ПО ASPECT RATIO ===
+    // Базовый ГОРИЗОНТАЛЬНЫЙ FOV — одинаковый для всех режимов
+    // В вертикали FOV расширяется, чтобы по горизонтали было видно то же
+    const HORIZONTAL_FOV_BASE = 95 + speedRatio * 5; // 95-100° по горизонтали
+    
+    // Переводим горизонтальный FOV в вертикальный через aspect
+    const hFovRad = HORIZONTAL_FOV_BASE * Math.PI / 180;
+    const vFovRad = 2 * Math.atan(Math.tan(hFovRad / 2) / camera.aspect);
+    const vFovDeg = vFovRad * 180 / Math.PI;
+    
+    // Ограничения — не даём FOV сойти с ума
+    const clampedFov = Math.max(50, Math.min(120, vFovDeg));
+    
+    camera.fov = clampedFov;
     camera.updateProjectionMatrix();
   }
 }
