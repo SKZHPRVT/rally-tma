@@ -16,9 +16,9 @@ export class Car {
   drag: number = 0.5;
   turnSpeed: number = 1.8;
 
-  // Сглаженные значения для камеры (чтобы избежать дрожи)
+  // Сглаженные параметры камеры
   private smoothBackDist: number = 7;
-  private smoothHeight: number = 2.2;
+  private smoothHeight: number = 2.3;
   private smoothFov: number = 70;
 
   constructor(scene: THREE.Scene, spawnPos?: THREE.Vector3, spawnRot: number = 0) {
@@ -69,9 +69,8 @@ export class Car {
     this.mesh.position.copy(this.position);
     this.mesh.rotation.y = this.rotation;
     
-    // Сброс сглаживания
     this.smoothBackDist = 7;
-    this.smoothHeight = 2.2;
+    this.smoothHeight = 2.3;
     this.smoothFov = 70;
   }
 
@@ -104,40 +103,48 @@ export class Car {
     this.mesh.rotation.y = this.rotation;
   }
 
-  updateCamera(camera: THREE.PerspectiveCamera) {
+  updateCamera(camera: THREE.PerspectiveCamera, dt: number = 0.016) {
     const speedRatio = Math.min(Math.abs(this.velocity) / this.maxSpeed, 1);
 
-    // Целевые значения для камеры
+    // Целевые значения
     const targetBackDist = 7 + speedRatio * 0.8;
     const targetHeight = 2.3 + speedRatio * 0.2;
     const targetFov = 70 + speedRatio * 3;
 
-    // Плавное сглаживание САМИХ ПАРАМЕТРОВ, а не позиции
-    const smoothFactor = 1 - Math.pow(0.001, 0.016); // ~0.15 на 60 FPS
-    this.smoothBackDist += (targetBackDist - this.smoothBackDist) * smoothFactor;
-    this.smoothHeight += (targetHeight - this.smoothHeight) * smoothFactor;
-    this.smoothFov += (targetFov - this.smoothFov) * smoothFactor;
+    // === Frame-rate independent smoothing для параметров ===
+    // Экспоненциальный фильтр — одинаково работает на 30 и 60 FPS
+    const paramsSmooth = 1 - Math.exp(-5 * dt);
+    this.smoothBackDist += (targetBackDist - this.smoothBackDist) * paramsSmooth;
+    this.smoothHeight += (targetHeight - this.smoothHeight) * paramsSmooth;
+    this.smoothFov += (targetFov - this.smoothFov) * paramsSmooth;
 
-    // === КЛЮЧЕВОЕ: камера СТРОГО привязана к машине ===
-    // Без lerp — прямо в локальных координатах
-    const offset = new THREE.Vector3(0, this.smoothHeight, -this.smoothBackDist);
-    offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation);
+    // === Целевая позиция камеры (в локальных координатах машины) ===
+    const targetOffset = new THREE.Vector3(0, this.smoothHeight, -this.smoothBackDist);
+    targetOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation);
 
-    // Прямо ставим камеру (никакого lerp!)
-    camera.position.set(
-      this.position.x + offset.x,
-      this.position.y + offset.y,
-      this.position.z + offset.z
+    const targetPos = new THREE.Vector3(
+      this.position.x + targetOffset.x,
+      this.position.y + targetOffset.y,
+      this.position.z + targetOffset.z
     );
 
-    // Смотрим на машину
+    // === Frame-rate independent lerp для позиции ===
+    // ВАЖНО: speed=6 — это коэффициент. Чем больше — тем плотнее следует
+    // При speed=6: на 60 FPS — камера почти на месте, но с лёгким запаздыванием
+    //                на 30 FPS — то же самое
+    const posSmooth = 1 - Math.exp(-6 * dt);
+    camera.position.x += (targetPos.x - camera.position.x) * posSmooth;
+    camera.position.y += (targetPos.y - camera.position.y) * posSmooth;
+    camera.position.z += (targetPos.z - camera.position.z) * posSmooth;
+
+    // === Смотрим на машину ===
     camera.lookAt(
       this.position.x,
       this.position.y + 0.8,
       this.position.z
     );
 
-    // FOV — плавно, но через smoothFov
+    // === FOV ===
     if (Math.abs(this.smoothFov - camera.fov) > 0.05) {
       camera.fov = this.smoothFov;
       camera.updateProjectionMatrix();
