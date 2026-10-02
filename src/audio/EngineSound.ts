@@ -9,17 +9,14 @@ export class EngineSound {
     const AC = window.AudioContext || (window as any).webkitAudioContext;
     this.ctx = new AC();
 
-    // Осциллятор — пила, звучит как двигатель
     this.osc = this.ctx.createOscillator();
     this.osc.type = 'sawtooth';
     this.osc.frequency.value = 60;
 
-    // Фильтр — убирает резкость
     this.filter = this.ctx.createBiquadFilter();
     this.filter.type = 'lowpass';
     this.filter.frequency.value = 800;
 
-    // Громкость
     this.gain = this.ctx.createGain();
     this.gain.gain.value = 0;
 
@@ -54,27 +51,26 @@ export class EngineSound {
     const speedRatio = Math.min(speed / maxSpeed, 1);
     const now = this.ctx.currentTime;
 
-    // Обороты: 60 → 350 Гц
-    // НО на скорости > 95% — фиксируем на 300 Гц, чтобы не пищал
+    // Обороты: 60 → 250 Гц
+    // На 95%+ — фиксируем на 250, чтобы не пищал
     let targetFreq;
     if (speedRatio > 0.95) {
-      targetFreq = 300;
+      targetFreq = 250;
     } else {
-      targetFreq = 60 + speedRatio * 240; // 60-300
+      targetFreq = 60 + speedRatio * 190; // 60-250
     }
     this.osc.frequency.linearRampToValueAtTime(targetFreq, now + 0.1);
 
-    // Фильтр: чем быстрее — тем ярче
-    // НО на макс — фиксируем на 1600, чтобы не пищал
+    // Фильтр
     let targetFilter;
     if (speedRatio > 0.95) {
-      targetFilter = 1600;
+      targetFilter = 1400;
     } else {
-      targetFilter = 800 + speedRatio * 800; // 800-1600
+      targetFilter = 800 + speedRatio * 600; // 800-1400
     }
     this.filter.frequency.linearRampToValueAtTime(targetFilter, now + 0.1);
 
-    // Громкость (без пульсации — как было в рабочей версии)
+    // Громкость
     let targetGain;
     if (gas) {
       targetGain = 0.15;

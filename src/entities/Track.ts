@@ -26,33 +26,44 @@ export class Track {
     }
   }
 
-  // ЗЕМЛЯ — тёмно-зелёный
+  // ЗЕМЛЯ — на y=0, depthWrite: false чтобы не конфликтовать с дорогой
   createGround(scene: THREE.Scene) {
     const geo = new THREE.PlaneGeometry(3000, 3000, 1, 1);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x5a6b3a });
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x5a6b3a,
+      depthWrite: false,           // ← не пишем в depth buffer
+    });
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
+    ground.renderOrder = 0;         // ← рисуется первым
     ground.receiveShadow = true;
     scene.add(ground);
   }
 
-  // ДОРОГА — единая полоса с перекрытием
+  // ДОРОГА — на y=0.15, polygonOffset чтобы всегда быть поверх земли
   createRoad(scene: THREE.Scene) {
     const points: THREE.Vector3[] = [];
     for (let i = 0; i < 80; i++) {
       const z = -i * 20;
       const x = Math.sin(i * 0.3) * 30;
-      points.push(new THREE.Vector3(x, 0.05, z));
+      points.push(new THREE.Vector3(x, 0.15, z)); // ← y=0.15
     }
 
-    const texName = 'gravel1'; // одна текстура — не чередуем
+    const texName = 'gravel1';
     const tex = this.textures[texName].clone();
     tex.needsUpdate = true;
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1.5, 5); // повтор по длине
+    tex.repeat.set(1.5, 5);
 
-    const roadMat = new THREE.MeshStandardMaterial({ map: tex });
+    const roadMat = new THREE.MeshStandardMaterial({
+      map: tex,
+      polygonOffset: true,           // ← сдвигаем глубину
+      polygonOffsetFactor: -1,       // ← ближе к камере
+      polygonOffsetUnits: -1,
+    });
+
     const roadWidth = 6;
     const segmentLength = 20;
 
@@ -63,14 +74,14 @@ export class Track {
       const dir = b.clone().sub(a).normalize();
       const angle = Math.atan2(dir.x, dir.z);
 
-      // Удлиняем каждый сегмент на 2м — перекрытие, чтобы не было швов
       const geo = new THREE.PlaneGeometry(roadWidth, segmentLength + 2);
       const road = new THREE.Mesh(geo, roadMat);
 
       road.position.copy(mid);
-      road.position.y = 0.05;
+      road.position.y = 0.15;
       road.rotation.x = -Math.PI / 2;
       road.rotation.z = angle;
+      road.renderOrder = 1;          // ← рисуется после земли
       road.receiveShadow = true;
       scene.add(road);
     }
