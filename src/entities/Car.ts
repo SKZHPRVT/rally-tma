@@ -49,6 +49,18 @@ export class Car {
       this.mesh.add(w);
     }
 
+    const shadowGeo = new THREE.CircleGeometry(1.8, 16);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+    });
+    const fakeShadow = new THREE.Mesh(shadowGeo, shadowMat);
+    fakeShadow.rotation.x = -Math.PI / 2;
+    fakeShadow.position.y = 0.06;
+    this.mesh.add(fakeShadow);
+
     this.mesh.position.copy(this.position);
     scene.add(this.mesh);
   }
@@ -85,11 +97,21 @@ export class Car {
   }
 
   updateCamera(camera: THREE.PerspectiveCamera) {
-    const behind = new THREE.Vector3(0, 2.2, -7).applyAxisAngle(
+    const speedRatio = Math.min(Math.abs(this.velocity) / this.maxSpeed, 1);
+
+    const backDist = -7 - speedRatio * 3;
+    const height = 2.2 + speedRatio * 0.5;
+
+    const behind = new THREE.Vector3(0, height, backDist).applyAxisAngle(
       new THREE.Vector3(0, 1, 0), this.rotation
     );
     const targetPos = this.position.clone().add(behind);
     camera.position.lerp(targetPos, 0.15);
+
     camera.lookAt(this.position.x, this.position.y + 0.5, this.position.z);
+
+    const targetFov = 70 + speedRatio * 15;
+    camera.fov += (targetFov - camera.fov) * 0.05;
+    camera.updateProjectionMatrix();
   }
 }

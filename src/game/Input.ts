@@ -12,6 +12,15 @@ export class Input {
     this.bindButton('btn-brake', 'brake');
     this.bindButton('btn-left', 'left');
     this.bindButton('btn-right', 'right');
+
+    // Разблокировка аудио при первом тапе
+    document.addEventListener('touchstart', () => {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (Ctx) {
+        const ctx = new Ctx();
+        if (ctx.state === 'suspended') ctx.resume();
+      }
+    }, { once: true });
   }
 
   onKey(e: KeyboardEvent, down: boolean) {

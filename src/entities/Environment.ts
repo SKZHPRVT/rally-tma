@@ -5,11 +5,32 @@ export class Environment {
 
   constructor(scene: THREE.Scene, textures: { [key: string]: THREE.Texture }) {
     this.textures = textures;
+    this.createMountains(scene);
     this.createBushes(scene);
     this.createRocks(scene);
   }
 
-  // КУСТЫ вдоль обочин
+  createMountains(scene: THREE.Scene) {
+    const mountainMat = new THREE.MeshStandardMaterial({ color: 0x8b7d6b });
+
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const dist = 600 + Math.random() * 300;
+      const x = Math.cos(angle) * dist;
+      const z = Math.sin(angle) * dist;
+      const height = 150 + Math.random() * 150;
+      const radius = 80 + Math.random() * 60;
+
+      const mountain = new THREE.Mesh(
+        new THREE.ConeGeometry(radius, height, 6),
+        mountainMat
+      );
+      mountain.position.set(x, height / 2 - 5, z);
+      mountain.rotation.y = Math.random() * Math.PI;
+      scene.add(mountain);
+    }
+  }
+
   createBushes(scene: THREE.Scene) {
     const bushMat = new THREE.MeshStandardMaterial({ color: 0x3a6b2a });
 
@@ -31,11 +52,10 @@ export class Environment {
     }
   }
 
-  // КАМНИ вдоль обочин
   createRocks(scene: THREE.Scene) {
     const rockMat = new THREE.MeshStandardMaterial({
       map: this.textures['rock1'],
-      color: 0xffffff,
+      color: 0xcccccc,
     });
 
     for (let i = 0; i < 150; i++) {
