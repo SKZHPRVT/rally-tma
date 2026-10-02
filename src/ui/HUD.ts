@@ -1,45 +1,101 @@
 import { Car } from '../entities/Car';
 import { Track } from '../entities/Track';
 
+type Mode = 'idle' | 'race' | 'free' | 'countdown';
+
 export class HUD {
   timerEl: HTMLElement;
   speedEl: HTMLElement;
+  
+  startModal: HTMLElement;
   finishModal: HTMLElement;
   finishTimeEl: HTMLElement;
+  countdownEl: HTMLElement;
+  countdownNumberEl: HTMLElement;
   
+  mode: Mode = 'idle';
   elapsed: number = 0;
-  started: boolean = false;      // старт взят?
-  finished: boolean = false;     // финиш?
   
-  // Для детекции пересечения старта
-  lastDistanceToStart: number = 0;
+  // Отсчёт
+  countdownValue: number = 3;
+  countdownTimer: number = 0;
+  
+  // Callback для смены мира
+  onNewWorld: (() => void) | null = null;
 
   constructor() {
     this.timerEl = document.getElementById('timer')!;
     this.speedEl = document.getElementById('speed')!;
+    
+    this.startModal = document.getElementById('start-modal')!;
     this.finishModal = document.getElementById('finish-modal')!;
     this.finishTimeEl = document.getElementById('finish-time')!;
+    this.countdownEl = document.getElementById('countdown')!;
+    this.countdownNumberEl = document.getElementById('countdown-number')!;
     
-    // Кнопки модалки
+    // Стартовое меню
+    document.getElementById('btn-start-race')!.addEventListener('click', () => {
+      this.startCountdown();
+    });
+    
+    document.getElementById('btn-start-free')!.addEventListener('click', () => {
+      this.startFreeRide();
+    });
+    
+    // Финиш
     document.getElementById('btn-retry')!.addEventListener('click', () => {
-      this.hideFinish();
-      location.reload();
+      this.finishModal.classList.remove('show');
+      this.startCountdown();
     });
     
     document.getElementById('btn-new-world')!.addEventListener('click', () => {
-      // Пока просто перезагрузка — потом можно добавить генерацию с новым сидом
-      this.hideFinish();
-      location.reload();
+      this.finishModal.classList.remove('show');
+      if (this.onNewWorld) this.onNewWorld();
     });
   }
 
-  hideFinish() {
+  // === РЕЖИМЫ ===
+  startRace() {
+    this.mode = 'race';
+    this.elapsed = 0;
+    this.timerEl.textContent = '00:00.00';
+    console.log('[hud] RACE mode');
+  }
+
+  startFreeRide() {
+    this.mode = 'free';
+    this.elapsed = 0;
+    this.timerEl.textContent = '00:00.00';
+    this.startModal.classList.remove('show');
+    console.log('[hud] FREE mode');
+  }
+
+  startCountdown() {
+    this.startModal.classList.remove('show');
     this.finishModal.classList.remove('show');
+    this.mode = 'countdown';
+    this.countdownValue = 3;
+    this.countdownTimer = 1.0;
+    this.countdownNumberEl.textContent = '3';
+    this.countdownNumberEl.classList.remove('go');
+    this.countdownEl.classList.add('show');
+    console.log('[hud] COUNTDOWN start');
+  }
+
+  // Возврат в стартовое меню (после генерации новой карты)
+  showStartMenu() {
+    this.mode = 'idle';
+    this.startModal.classList.add('show');
+    this.finishModal.classList.remove('show');
+    this.countdownEl.classList.remove('show');
+    this.elapsed = 0;
+    this.timerEl.textContent = '00:00.00';
   }
 
   showFinish() {
     this.finishTimeEl.textContent = this.formatTime(this.elapsed);
     this.finishModal.classList.add('show');
+    this.mode = 'idle';
   }
 
   formatTime(t: number): string {
@@ -54,41 +110,54 @@ export class HUD {
   }
 
   update(dt: number, car: Car, track?: Track) {
-    // === Детекция старта/финиша ===
-    if (track) {
-      const startPoint = track.startPoint;
-      const dx = car.position.x - startPoint.x;
-      const dz = car.position.z - startPoint.z;
-      const distToStart = Math.sqrt(dx * dx + dz * dz);
+    // === ОТСЧЁТ ===
+    if (this.mode === 'countdown') {
+      this.countdownTimer -= dt;
       
-      // === Старт ===
-      // Машина впервые оказалась близко к старту (< 10 м) — пошёл отсчёт
-      if (!this.started && !this.finished && distToStart < 10) {
-        this.started = true;
-        this.elapsed = 0;
-        console.log('[hud] START — timer started');
-      }
-      
-      // === Финиш ===
-      // Машина прошла по кругу и вернулась к старту (была далеко, снова близко)
-      if (this.started && !this.finished && distToStart < 10 && this.elapsed > 5) {
-        // Проверяем что машина реально уезжала от старта
-        this.finished = true;
-        console.log('[hud] FINISH — time:', this.formatTime(this.elapsed));
-        this.showFinish();
+      if (this.countdownTimer <= 0) {
+        this.countdownValue--;
+        
+        if (this.countdownValue > 0) {
+          this.countdownNumberEl.textContent = String(this.countdownValue);
+          this.countdownTimer = 1.0;
+        } else if (this.countdownValue === 0) {
+          this.countdownNumberEl.textContent = 'GO!';
+          this.countdownNumberEl.classList.add('go');
+          this.countdownTimer = 0.7;
+        } else {
+          // Конец отсчёта — старт гонки
+          this.countdownEl.classList.remove('show');
+          this.startRace();
+        }
       }
     }
     
-    // === Обновление времени ===
-    if (this.started && !this.finished) {
+    // === ТАЙМЕР ===
+    if (this.mode === 'race') {
       this.elapsed += dt;
+      
+      // Финиш — машина проехала круг и вернулась к старту
+      if (track && this.elapsed > 5) {
+        const startPoint = track.startPoint;
+        const dx = car.position.x - startPoint.x;
+        const dz = car.position.z - startPoint.z;
+        const distToStart = Math.sqrt(dx * dx + dz * dz);
+        
+        if (distToStart < 12) {
+          this.showFinish();
+        }
+      }
     }
     
-    // === Таймер на экране ===
     this.timerEl.textContent = this.formatTime(this.elapsed);
     
-    // === Скорость ===
+    // === СКОРОСТЬ ===
     const kmh = Math.abs(car.velocity * 3.6);
     this.speedEl.innerHTML = `${Math.round(kmh)} <span>km/h</span>`;
+  }
+
+  // Можно ли управлять машиной
+  canControl(): boolean {
+    return this.mode === 'race' || this.mode === 'free';
   }
 }

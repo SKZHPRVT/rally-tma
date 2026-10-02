@@ -18,50 +18,39 @@
     }
     canvas { display: block; width: 100%; height: 100%; }
     
-    /* HUD — таймер и скорость */
+    /* HUD */
     #timer {
       position: fixed;
-      top: 8px;
-      left: 50%;
+      top: 8px; left: 50%;
       transform: translateX(-50%) translateX(-75px);
       background: rgba(0,0,0,0.65);
       border: 2px solid rgba(255,255,255,0.25);
       border-radius: 10px;
       padding: 4px 14px;
-      color: #fff;
-      font-weight: bold;
+      color: #fff; font-weight: bold;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
-      font-size: 20px;
-      letter-spacing: 1px;
-      min-width: 120px;
-      text-align: center;
-      z-index: 100;
-      pointer-events: none;
+      font-size: 20px; letter-spacing: 1px;
+      min-width: 120px; text-align: center;
+      z-index: 100; pointer-events: none;
     }
     
     #speed {
       position: fixed;
-      top: 8px;
-      left: 50%;
+      top: 8px; left: 50%;
       transform: translateX(-50%) translateX(75px);
       background: rgba(0,0,0,0.65);
       border: 2px solid rgba(255,255,255,0.25);
       border-radius: 10px;
       padding: 4px 14px;
-      color: #fff;
-      font-weight: bold;
+      color: #fff; font-weight: bold;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
       font-size: 20px;
-      min-width: 100px;
-      text-align: center;
-      z-index: 100;
-      pointer-events: none;
+      min-width: 100px; text-align: center;
+      z-index: 100; pointer-events: none;
     }
     
     #speed span {
-      font-size: 11px;
-      opacity: 0.7;
-      font-weight: normal;
+      font-size: 11px; opacity: 0.7; font-weight: normal;
     }
     
     .btn-control {
@@ -70,19 +59,13 @@
       background: rgba(0,0,0,0.4);
       border: 2px solid rgba(255,255,255,0.5);
       border-radius: 50%;
-      color: #fff;
-      font-size: 22px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      cursor: pointer;
+      color: #fff; font-size: 22px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none; cursor: pointer;
       touch-action: none;
       transition: transform 0.1s, background 0.15s;
       z-index: 20;
     }
-    
     .btn-control:active {
       background: rgba(255,255,255,0.4);
       transform: scale(0.92);
@@ -93,11 +76,11 @@
     #btn-left { bottom: 60px; left: 20px; width: 80px; height: 80px; }
     #btn-right { bottom: 60px; left: 120px; width: 80px; height: 80px; }
     
-    /* Модалка финиша */
-    #finish-modal {
+    /* === МОДАЛКИ === */
+    .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.78);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -105,21 +88,27 @@
       z-index: 200;
       padding: 20px;
     }
+    .modal.show { display: flex; }
     
-    #finish-modal.show {
-      display: flex;
-    }
-    
-    #finish-title {
-      font-size: 48px;
+    .modal-title {
+      font-size: 36px;
       color: #FFD24A;
       font-weight: bold;
       text-shadow: 0 0 20px rgba(255,210,74,0.8), 3px 3px 6px #000;
       margin-bottom: 12px;
       letter-spacing: 3px;
+      text-align: center;
     }
     
-    #finish-time {
+    .modal-subtitle {
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 32px;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+    
+    .modal-time {
       font-size: 32px;
       color: #fff;
       font-weight: bold;
@@ -128,15 +117,15 @@
       letter-spacing: 2px;
     }
     
-    #finish-buttons {
+    .modal-buttons {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       width: 100%;
       max-width: 320px;
     }
     
-    .finish-btn {
+    .modal-btn {
       padding: 16px 24px;
       font-size: 18px;
       font-weight: bold;
@@ -150,14 +139,49 @@
       user-select: none;
       touch-action: manipulation;
     }
-    
-    .finish-btn:active {
-      transform: scale(0.95);
-    }
-    
-    .finish-btn.primary {
+    .modal-btn:active { transform: scale(0.95); }
+    .modal-btn.primary {
       background: rgba(200,30,30,0.85);
       border-color: #ff5555;
+    }
+    
+    /* === COUNTDOWN === */
+    #countdown {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+      pointer-events: none;
+    }
+    #countdown.show { display: flex; }
+    
+    #countdown-number {
+      font-size: 180px;
+      font-weight: bold;
+      color: #FFD24A;
+      text-shadow:
+        0 0 40px rgba(255,210,74,1),
+        0 0 80px rgba(255,140,0,0.8),
+        6px 6px 12px #000;
+      animation: pulse 1s ease-out;
+      font-family: 'Courier New', monospace;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    /* GO! */
+    #countdown-number.go {
+      color: #44ff44;
+      text-shadow:
+        0 0 40px rgba(68,255,68,1),
+        0 0 80px rgba(0,200,0,0.8),
+        6px 6px 12px #000;
     }
   </style>
 </head>
@@ -172,13 +196,29 @@
   <div id="btn-left" class="btn-control">◀</div>
   <div id="btn-right" class="btn-control">▶</div>
   
-  <div id="finish-modal">
-    <div id="finish-title">ФИНИШ</div>
-    <div id="finish-time">00:00.00</div>
-    <div id="finish-buttons">
-      <button class="finish-btn primary" id="btn-retry">🔄 Заново</button>
-      <button class="finish-btn" id="btn-new-world">🌍 Новый мир</button>
+  <!-- СТАРТОВОЕ МЕНЮ -->
+  <div id="start-modal" class="modal show">
+    <div class="modal-title">RALLY TMA</div>
+    <div class="modal-subtitle">Выбери режим</div>
+    <div class="modal-buttons">
+      <button class="modal-btn primary" id="btn-start-race">🏁 Круг</button>
+      <button class="modal-btn" id="btn-start-free">🌍 Свободная езда</button>
     </div>
+  </div>
+  
+  <!-- ФИНИШ -->
+  <div id="finish-modal" class="modal">
+    <div class="modal-title">ФИНИШ</div>
+    <div class="modal-time" id="finish-time">00:00.00</div>
+    <div class="modal-buttons">
+      <button class="modal-btn primary" id="btn-retry">🔄 Заново</button>
+      <button class="modal-btn" id="btn-new-world">🌍 Новая карта</button>
+    </div>
+  </div>
+  
+  <!-- ОТСЧЁТ -->
+  <div id="countdown">
+    <div id="countdown-number">3</div>
   </div>
   
   <script type="module" src="/src/main.ts"></script>

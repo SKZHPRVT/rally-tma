@@ -52,14 +52,26 @@ export class Game {
 
     this.track = new Track(this.scene);
 
-    // Спавн машины на 20 м ПОСЛЕ старта (чтобы сразу пересечь линию)
-    const spawnPoint = this.track.roadPoints[2].clone();
+    // Спавн машины ПРЯМО У СТАРТОВОЙ АРКИ
+    const spawnPoint = this.track.startPoint.clone();
     spawnPoint.y = 0.5;
+    // Смещаем чуть назад по направлению движения (чтобы арка была перед машиной)
+    const next = this.track.roadPoints[1];
+    const dir = next.clone().sub(this.track.startPoint).normalize();
+    spawnPoint.x -= dir.x * 5;  // 5м назад от арки
+    spawnPoint.z -= dir.z * 5;
+    
     this.car = new Car(this.scene, spawnPoint);
 
     this.hud = new HUD();
     this.input = new Input();
     this.engineSound = new EngineSound();
+
+    // Обработка кнопки "Новая карта"
+    this.hud.onNewWorld = () => {
+      console.log('[game] generating new world');
+      location.reload(); // пока просто перезагрузка
+    };
 
     this.clock = new THREE.Clock();
     window.addEventListener('resize', () => this.onResize());
@@ -82,6 +94,14 @@ export class Game {
     requestAnimationFrame(() => this.loop());
 
     const dt = Math.min(this.clock.getDelta(), 0.1);
+    
+    // Управление только в режимах race/free
+    this.input.enabled = this.hud.canControl();
+    
+    // Сбрасываем нажатия когда управление выключено
+    if (!this.input.enabled) {
+      this.input.reset();
+    }
 
     this.car.update(dt, this.input);
     this.car.updateCamera(this.camera);

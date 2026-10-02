@@ -3,9 +3,10 @@ export class Input {
   brake: boolean = false;
   left: boolean = false;
   right: boolean = false;
+  
+  enabled: boolean = false;   // ← блокировка управления
 
   constructor() {
-    // Разблокировка AudioContext при первом тапе
     const unlockAudio = () => {
       const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (AC) {
@@ -28,6 +29,7 @@ export class Input {
   }
 
   onKey(e: KeyboardEvent, down: boolean) {
+    if (!this.enabled) return;
     switch (e.key) {
       case 'ArrowUp': case 'w': case 'W': this.gas = down; break;
       case 'ArrowDown': case 's': case 'S': this.brake = down; break;
@@ -39,12 +41,23 @@ export class Input {
   bindButton(id: string, prop: keyof Input) {
     const btn = document.getElementById(id);
     if (!btn) return;
-    const set = (val: boolean) => { (this as any)[prop] = val; };
+    const set = (val: boolean) => {
+      if (!this.enabled) return;
+      (this as any)[prop] = val;
+    };
     btn.addEventListener('touchstart', (e) => { e.preventDefault(); set(true); });
     btn.addEventListener('touchend', (e) => { e.preventDefault(); set(false); });
     btn.addEventListener('touchcancel', (e) => { e.preventDefault(); set(false); });
     btn.addEventListener('mousedown', (e) => { e.preventDefault(); set(true); });
     btn.addEventListener('mouseup', (e) => { e.preventDefault(); set(false); });
     btn.addEventListener('mouseleave', () => set(false));
+  }
+
+  // Сбросить все нажатия (например, при старте отсчёта)
+  reset() {
+    this.gas = false;
+    this.brake = false;
+    this.left = false;
+    this.right = false;
   }
 }
