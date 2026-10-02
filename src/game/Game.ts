@@ -83,7 +83,7 @@ export class Game {
     this.car.updateCamera(this.camera);
     this.hud.update(dt, this.car);
 
-    this.engineSound.update(this.car.velocity, this.input.gas, this.input.brake);
+    this.engineSound.update(this.car.velocity, this.input.gas, this.input.brake, dt);
 
     this.renderer.render(this.scene, this.camera);
   }

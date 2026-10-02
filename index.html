@@ -18,7 +18,7 @@
     
     #top-hud {
       position: fixed;
-      top: 4px;
+      top: calc(env(safe-area-inset-top, 0px) + 80px);
       left: 0; right: 0;
       display: flex;
       justify-content: center;
@@ -81,10 +81,10 @@
       transform: scale(0.92);
     }
     
-    #btn-gas { bottom: 110px; right: 20px; width: 80px; height: 80px; }
-    #btn-brake { bottom: 20px; right: 20px; width: 80px; height: 80px; }
-    #btn-left { bottom: 60px; left: 20px; width: 80px; height: 80px; }
-    #btn-right { bottom: 60px; left: 120px; width: 80px; height: 80px; }
+    #btn-gas { bottom: calc(env(safe-area-inset-bottom, 0px) + 110px); right: 20px; width: 80px; height: 80px; }
+    #btn-brake { bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); right: 20px; width: 80px; height: 80px; }
+    #btn-left { bottom: calc(env(safe-area-inset-bottom, 0px) + 60px); left: 20px; width: 80px; height: 80px; }
+    #btn-right { bottom: calc(env(safe-area-inset-bottom, 0px) + 60px); left: 120px; width: 80px; height: 80px; }
   </style>
 </head>
 <body>
