@@ -4,6 +4,7 @@ import { Track } from '../entities/Track';
 import { HUD } from '../ui/HUD';
 import { Input } from './Input';
 import { EngineSound } from '../audio/EngineSound';
+import { BiomeId } from '../world/Biomes';
 
 export class Game {
   canvas: HTMLCanvasElement;
@@ -30,8 +31,6 @@ export class Game {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x87ceeb);
-    this.scene.fog = new THREE.Fog(0x87ceeb, 250, 700);
 
     this.camera = new THREE.PerspectiveCamera(
       70, window.innerWidth / window.innerHeight, 0.1, 2000
@@ -54,6 +53,7 @@ export class Game {
 
     this.currentSeed = this.weeklySeed();
     
+    // Первый биом — случайный по seed
     this.track = new Track(this.scene, this.currentSeed);
     
     const spawnPos = this.track.getSpawnPoint();
@@ -85,13 +85,13 @@ export class Game {
     return Math.floor(Math.random() * 1000000) + 1;
   }
 
-  regenerate(newSeed?: number) {
-    console.log('[game] regenerating world');
+  regenerate(newSeed?: number, biome?: BiomeId) {
+    console.log('[game] regenerating world — biome:', biome ?? 'random');
     
     this.currentSeed = newSeed ?? this.randomSeed();
     
     this.track.dispose();
-    this.track = new Track(this.scene, this.currentSeed);
+    this.track = new Track(this.scene, this.currentSeed, biome);
     
     const spawnPos = this.track.getSpawnPoint();
     const spawnRot = this.track.getSpawnRotation();
@@ -105,7 +105,7 @@ export class Game {
     
     this.hud.showStartMenu();
     
-    console.log('[game] new world ready, seed:', this.currentSeed);
+    console.log('[game] new world ready, biome:', this.track.biome);
   }
 
   onResize() {
@@ -132,7 +132,7 @@ export class Game {
     }
 
     this.car.update(dt, this.input);
-    this.car.updateCamera(this.camera, dt);
+    this.car.updateCamera(this.camera);
     this.hud.update(dt, this.car, this.track);
 
     this.engineSound.update(this.car.velocity, this.input.gas, this.input.brake, dt);
